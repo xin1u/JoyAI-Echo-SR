@@ -136,6 +136,11 @@ Echo-SR 生成器权重发布在
 hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 ```
 
+| 模型家族 | 已发布生成器 |
+| --- | --- |
+| LTX-2 19B | `echo-sr-ltx2-19b-dmd-step18300.safetensors` |
+| LTX-2.3 22B | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` |
+
 基座权重按下面的结构放置：
 
 ```text
@@ -231,7 +236,7 @@ bash scripts/infer.sh \
   --prompt 'A detailed cinematic scene.' \
   --output-dir outputs/inference \
   --checkpoint-path checkpoints/ltx-2.3-22b-dev.safetensors \
-  --student-lora-path checkpoints/echo-sr/GENERATOR.safetensors \
+  --student-lora-path checkpoints/echo-sr/echo-sr-ltx2.3-22b-dmd-step04600.safetensors \
   --spatial-upsampler-path checkpoints/ltx-2.3-spatial-upscaler-x2-1.1.safetensors \
   --gemma-root checkpoints/gemma-3-12b \
   --target-height 1024 \
