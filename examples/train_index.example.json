@@ -1,0 +1,6 @@
+{
+  "resolved_files": [
+    "/absolute/path/to/shards/train-00000.tar",
+    "/absolute/path/to/shards/train-00001.tar"
+  ]
+}

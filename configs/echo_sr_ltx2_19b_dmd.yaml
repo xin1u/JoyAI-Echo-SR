@@ -1,0 +1,101 @@
+# Echo-SR DMD + GAN for LTX-2 19B.
+# Paths are resolved from the repository root by scripts/train_19b_dmd.sh.
+
+model:
+  model_path: "checkpoints/ltx-2-19b-dev.safetensors"
+  text_encoder_path: "checkpoints/gemma-3-12b"
+  load_text_encoder_in_8bit: false
+  init_lora_path: "checkpoints/ltx-2-19b-distilled-lora-384.safetensors"
+  spatial_upsampler_path: "checkpoints/ltx-2-spatial-upscaler-x2-1.0.safetensors"
+
+lora:
+  rank: 384
+  alpha: 384
+  dropout: 0.0
+  param_dtype: "bf16"
+  target_modules: []
+
+data:
+  train_data_files:
+    - "data/train_index.json"
+  target_height: 1024
+  target_width: 1536
+  target_frames: 121
+  fps: 24
+  num_dataloader_workers: 1
+  caption_keys:
+    - "caption.mimo_sft.caption_en"
+    - "caption.qwen3_vl_instruct_8b_en.caption_en"
+  caption_sampling_prob: [0.5, 0.5]
+
+degradation:
+  teacher_degradation: false
+  student_degradation: false
+  mode: "aigc_realbasic"
+  lq_downsample_scale: [2.0, 2.0]
+
+teacher:
+  sigma_schedule: [0.909375, 0.725, 0.421875, 0.0]
+
+training:
+  sigma0: 0.909375
+  velocity_loss_weight: 1.0
+  x0_loss_weight: 0.25
+  output_dir: "outputs/echo_sr_ltx2_19b_dmd"
+  mixed_precision_mode: "bf16"
+  log_every: 1
+  save_every: 100
+  valid_every: 100
+
+optimization:
+  learning_rate: 1.0e-5
+  critic_learning_rate: 1.0e-5
+  steps: 30000
+  batch_size: 1
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  enable_gradient_checkpointing: true
+  adam_betas: [0.9, 0.95]
+  critic_adam_betas: [0.9, 0.95]
+  weight_decay: 0.0
+  adam_eps: 1.0e-8
+  adam_foreach: false
+
+dmd:
+  real_lora_path: null
+  fake_lora_init_path: null
+  generator_update_interval: 5
+  critic_update_interval: 1
+  sigma_sampling: "teacher_sigmas"
+  teacher_sigma_values: [0.909375, 0.725, 0.421875]
+  sigma_min: 0.02
+  sigma_max: 0.98
+  beta_alpha: 0.5
+  beta_beta: 1.0
+  normalizer_eps: 1.0e-6
+  normalizer_ema_decay: 0.99
+  dmd_loss_weight: 1.0
+  regression_loss_weight: 0.0
+  save_fake_score_lora: false
+
+gan:
+  enabled: true
+  token_dim: 128
+  hidden_dim: 512
+  discriminator_lr: 5.0e-4
+  generator_loss_weight: 0.1
+  discriminator_loss_weight: 1.0
+
+pixel_losses:
+  enabled: true
+  pixel_l1_loss_weight: 0.8
+  lpips_loss_weight: 2.0
+  num_decode_frames: 8
+  lpips_weights_path: "checkpoints/lpips_vgg.pth"
+
+seed: 42
+
+swanlab:
+  enable_swanlab: false
+  swanlab_project: "Echo-SR"
+  swanlab_experiment_name: "ltx2_19b_distill_dmd_gan"

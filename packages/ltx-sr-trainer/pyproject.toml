@@ -1,0 +1,29 @@
+[project]
+name = "ltx-sr-trainer"
+version = "0.2.0"
+description = "Echo-SR one-step stage-2 distillation trainers for LTX-2 and LTX-2.3"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ltx-core",
+    "ltx-pipelines",
+    "ltx-trainer",
+    "datasets>=3.0",
+    "decord>=0.6.0",
+    "einops",
+    "lpips>=0.1.4",
+    "numpy",
+    "opencv-python-headless>=4.10",
+    "pyyaml>=6.0",
+    "safetensors>=0.5",
+    "torch>=2.7",
+    "torchvision>=0.22",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+tracking = ["swanlab>=0.5"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

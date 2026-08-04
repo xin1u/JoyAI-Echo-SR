@@ -1,0 +1,38 @@
+name: Static checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install lightweight validation dependency
+        run: python -m pip install pyyaml
+      - name: Compile Python sources
+        run: python -m compileall -q packages tools
+      - name: Validate Shell scripts
+        run: |
+          for script in scripts/*.sh packages/ltx-sr-trainer/scripts/*.sh; do
+            bash -n "$script"
+          done
+      - name: Parse public configs and examples
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          import yaml
+
+          for path in Path("configs").rglob("*.yaml"):
+              with path.open(encoding="utf-8") as handle:
+                  assert isinstance(yaml.safe_load(handle), dict), path
+          for path in Path("examples").glob("*.json"):
+              with path.open(encoding="utf-8") as handle:
+                  assert isinstance(json.load(handle), dict), path
+          PY

@@ -1,0 +1,16 @@
+{
+  "height": 1080,
+  "width": 1920,
+  "fps": 24.0,
+  "fps_target": 24.0,
+  "frame_num_set": 121,
+  "high_quality_frame_index": 0,
+  "caption": {
+    "mimo_sft": {
+      "caption_en": "A detailed English description of the video."
+    },
+    "qwen3_vl_instruct_8b_en": {
+      "caption_en": "An alternative English description of the same video."
+    }
+  }
+}
