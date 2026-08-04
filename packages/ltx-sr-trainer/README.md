@@ -1,5 +1,6 @@
 # ltx-sr-trainer
 
-Implementation package for the Echo-SR LTX-2.3 22B and LTX-2 19B one-step stage-2 distillation recipes.
+DMD-only training helpers for Echo-SR on LTX-2 19B and LTX-2.3 22B.
 
-Use the repository-level launchers in `scripts/` rather than invoking these modules directly.
+Use the repository-level `scripts/train_dmd_19b.sh` and
+`scripts/train_dmd_22b.sh` launchers rather than invoking modules directly.

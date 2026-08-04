@@ -1,53 +1,11 @@
-"""LTX 2.0 三步教师在线蒸馏 + DMD 分布匹配 + GAN 对抗 SR LoRA 训练脚本。
+"""WebDataset-based Echo-SR DMD training for LTX-2 19B and LTX-2.3 22B.
 
-整体架构：
-    ┌─────────────────────────────────────────────────────────────────┐
-    │  在线蒸馏管线（继承自 train_stage2_sr_distill_v2.py）            │
-    │                                                                 │
-    │  GT 视频 → 下采样/退化 → VAE encode → spatial upsample → LQ latent │
-    │                          ↓                                      │
-    │  教师 LoRA（frozen）3步 Euler 去噪 → teacher_x0（高质量 GT）      │
-    │  学生 LoRA（trainable）单步预测    → student_x0（蒸馏目标）       │
-    └─────────────────────────────────────────────────────────────────┘
+The shared frozen transformer carries four LoRA branches: a frozen three-step
+teacher, a trainable one-step student/generator, a frozen real score, and a
+trainable fake score. The objective combines online trajectory distillation,
+DMD distribution matching, optional GAN classification, and pixel losses.
 
-    ┌─────────────────────────────────────────────────────────────────┐
-    │  DMD 分布匹配损失（参考 train_stage2_sr_dmd_one_step_fsdp.py）    │
-    │                                                                 │
-    │  student_x0 + noise → x_noisy                                   │
-    │  real_score LoRA（frozen）→ pred_x0_real（真实分布得分）          │
-    │  fake_score LoRA（trainable）→ pred_x0_fake（生成分布得分）       │
-    │  DMD loss = ||x0_hat - (x0_hat + (real - fake)/norm)||²         │
-    └─────────────────────────────────────────────────────────────────┘
-
-    ┌─────────────────────────────────────────────────────────────────┐
-    │  GAN 对抗损失（参考 DMD2 的 cls_on_clean_image）                 │
-    │                                                                 │
-    │  判别器（TokenPoolingDiscriminator）：                            │
-    │    real = teacher_x0 tokens → logit（应为 1）                    │
-    │    fake = student_x0 tokens → logit（应为 0）                    │
-    │  生成器损失：让判别器认为 student_x0 是真的                       │
-    └─────────────────────────────────────────────────────────────────┘
-
-损失函数总览：
-    L_total = w_vel  * L_velocity        # 速度场 MSE（锚定教师轨迹）
-            + w_x0   * L_x0              # x0 MSE（直接蒸馏）
-            + w_dmd  * L_dmd             # DMD 分布匹配
-            + w_reg  * L_regression      # DMD 回归正则
-            + w_gan  * L_gan_generator   # GAN 生成器损失
-            + w_l1   * L_pixel_l1        # 像素 L1（可选）
-            + w_lpips* L_lpips           # LPIPS 感知（可选）
-
-LoRA 分支管理（4 个 LoRA 共享 1 个 frozen base transformer）：
-    - teacher:  frozen，3 步 Euler 去噪生成在线 GT
-    - student:  trainable，单步预测（即 DMD 中的 generator）
-    - real:     frozen，DMD real score
-    - fake:     trainable，DMD fake score / critic
-
-用法:
-    python scripts/train_stage2_sr_distill_dmd_v2.py configs/ltx2_stage2_sr_distill_dmd_lora_v2.yaml
-
-Modified for the Echo-SR release in 2026: portable configuration paths,
-environment-based experiment credentials, and config-only validation.
+This public entry is video-only and requires ``dmd.enabled: true``.
 """
 
 from __future__ import annotations
@@ -123,7 +81,7 @@ from ltx_trainer.training_strategies.base_strategy import DEFAULT_FPS
 def parse_args() -> argparse.Namespace:
     """解析命令行参数。"""
     parser = argparse.ArgumentParser(
-        description="LTX 2.0 三步教师在线蒸馏 + DMD + GAN SR LoRA 训练"
+        description="Echo-SR WebDataset online distillation + DMD + GAN training"
     )
     parser.add_argument("config", type=str, help="YAML 配置文件路径")
     parser.add_argument(
@@ -149,7 +107,7 @@ def validate_config_structure(cfg: dict[str, Any]) -> None:
         "data": ("train_data_files", "target_height", "target_width", "target_frames"),
         "training": ("output_dir", "sigma0"),
         "optimization": ("learning_rate", "critic_learning_rate", "steps", "batch_size"),
-        "dmd": ("generator_update_interval", "critic_update_interval", "dmd_loss_weight"),
+        "dmd": ("enabled", "generator_update_interval", "critic_update_interval", "dmd_loss_weight"),
         "gan": ("enabled", "token_dim", "hidden_dim"),
     }
     for section, keys in required.items():
@@ -159,6 +117,8 @@ def validate_config_structure(cfg: dict[str, Any]) -> None:
         missing = [key for key in keys if key not in values or values[key] in (None, "", [])]
         if missing:
             raise ValueError(f"Missing required keys in {section}: {', '.join(missing)}")
+    if not bool(cfg["dmd"]["enabled"]):
+        raise ValueError("This release is DMD-only: set dmd.enabled: true")
 
 
 def _normalize_path_string(value: str | Path | None) -> str | Path | None:
@@ -881,7 +841,7 @@ def attach_all_loras(
     student_lora.requires_grad_(True)   # 学生/generator: trainable
     fake_lora.requires_grad_(True)      # fake score/critic: trainable
 
-    # 冻结学生 LoRA 中的 audio 相关参数（LTX 2.0 纯视频，不训练 audio 分支）
+    # Freeze audio LoRA parameters; this release trains the video branch only.
     for name, param in student_lora.named_lora_parameters():
         if "audio" in name:
             param.requires_grad_(False)
@@ -1044,7 +1004,7 @@ def main() -> None:
     cfg = normalize_config_paths(load_config(args.config))
     validate_config_structure(cfg)
     if args.validate_config:
-        print(f"Config OK: {Path(args.config).resolve()}")
+        print(f"Config OK (DMD enabled): {Path(args.config).resolve()}")
         return
     cfg, inferred_init_lora = maybe_sync_lora_hparams_from_init(cfg)
 
@@ -1074,7 +1034,7 @@ def main() -> None:
             swanlab.login(api_key=str(swanlab_api_key))
         exp_name = str(swanlab_cfg.get("swanlab_experiment_name", "")) or Path(cfg["training"]["output_dir"]).name
         swanlab.init(
-            project=str(swanlab_cfg.get("swanlab_project", "LTX-2.0-stage2-sr-distill-dmd")),
+            project=str(swanlab_cfg.get("swanlab_project", "Echo-SR")),
             experiment_name=exp_name, config=cfg,
         )
 
@@ -1244,7 +1204,7 @@ def main() -> None:
         teacher_count = sum(p.numel() for p in teacher_lora.parameters())
         real_count = sum(p.numel() for p in real_lora.parameters())
         print("=" * 60)
-        print("  LTX 2.0 在线蒸馏 + DMD + GAN SR LoRA 训练")
+        print("  Echo-SR WebDataset online distillation + DMD + GAN")
         print("=" * 60)
         print(f"  分布式类型: {accelerator.distributed_type}")
         print(f"  LoRA 参数量:")

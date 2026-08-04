@@ -16,12 +16,13 @@ The following directories are a compatibility snapshot used by Echo-SR:
 
 ## Echo-SR Modifications
 
-The Echo-SR release adds or modifies:
+The Echo-SR DMD-only release adds or modifies:
 
 - stage-2 SR WebDataset loading and video degradation;
 - native LoRA attachment and checkpoint handling;
-- three-step teacher to one-step student online distillation;
-- the 19B DMD, fake-score, and token-pooling GAN training path;
+- shared WebDataset online teacher/student distillation for 19B and 22B;
+- DMD distribution matching with real-score and fake-score LoRA branches;
+- token-pooling GAN training and pixel-space auxiliary losses;
 - FSDP launch configuration, portable YAML files, and release-safe logging;
 - teacher/student stage-2 SR inference and tiled VAE decoding.
 

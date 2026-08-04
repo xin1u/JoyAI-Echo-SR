@@ -1,5 +1,5 @@
-# Echo-SR for LTX-2.3 22B.
-# Paths are resolved from the repository root by scripts/train_22b.sh.
+# Echo-SR DMD + GAN for LTX-2.3 22B using online WebDataset training.
+# Paths are resolved from the repository root by scripts/train_dmd_22b.sh.
 
 model:
   model_path: "checkpoints/ltx-2.3-22b-dev.safetensors"
@@ -30,7 +30,7 @@ data:
 
 degradation:
   teacher_degradation: false
-  student_degradation: true
+  student_degradation: false
   mode: "aigc_realbasic"
   lq_downsample_scale: [2.0, 2.0]
 
@@ -41,7 +41,7 @@ training:
   sigma0: 0.909375
   velocity_loss_weight: 1.0
   x0_loss_weight: 0.25
-  output_dir: "outputs/echo_sr_ltx23_22b"
+  output_dir: "outputs/echo_sr_ltx23_22b_dmd"
   mixed_precision_mode: "bf16"
   log_every: 1
   save_every: 100
@@ -49,19 +49,48 @@ training:
 
 optimization:
   learning_rate: 1.0e-5
-  steps: 30000
+  critic_learning_rate: 1.0e-5
+  steps: 3000
   batch_size: 1
   gradient_accumulation_steps: 1
   max_grad_norm: 1.0
   enable_gradient_checkpointing: true
   adam_betas: [0.9, 0.95]
+  critic_adam_betas: [0.9, 0.95]
   weight_decay: 0.0
   adam_eps: 1.0e-8
   adam_foreach: false
 
+dmd:
+  # Required by the public DMD-only trainer. Setting this to false aborts early.
+  enabled: true
+  real_lora_path: null
+  fake_lora_init_path: null
+  generator_update_interval: 5
+  critic_update_interval: 1
+  sigma_sampling: "teacher_sigmas"
+  teacher_sigma_values: [0.909375, 0.725, 0.421875]
+  sigma_min: 0.02
+  sigma_max: 0.98
+  beta_alpha: 0.5
+  beta_beta: 1.0
+  normalizer_eps: 1.0e-6
+  normalizer_ema_decay: 0.99
+  dmd_loss_weight: 1.0
+  regression_loss_weight: 0.0
+  save_fake_score_lora: false
+
+gan:
+  enabled: true
+  token_dim: 128
+  hidden_dim: 512
+  discriminator_lr: 5.0e-4
+  generator_loss_weight: 0.1
+  discriminator_loss_weight: 1.0
+
 pixel_losses:
   enabled: true
-  pixel_l1_loss_weight: 1.0
+  pixel_l1_loss_weight: 0.8
   lpips_loss_weight: 2.0
   num_decode_frames: 8
   lpips_weights_path: "checkpoints/lpips_vgg.pth"
@@ -71,4 +100,4 @@ seed: 42
 swanlab:
   enable_swanlab: false
   swanlab_project: "Echo-SR"
-  swanlab_experiment_name: "ltx23_22b_distill"
+  swanlab_experiment_name: "ltx23_22b_dmd_webdataset"

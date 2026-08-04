@@ -1,5 +1,5 @@
 # Echo-SR DMD + GAN for LTX-2 19B.
-# Paths are resolved from the repository root by scripts/train_19b_dmd.sh.
+# Paths are resolved from the repository root by scripts/train_dmd_19b.sh.
 
 model:
   model_path: "checkpoints/ltx-2-19b-dev.safetensors"
@@ -62,6 +62,8 @@ optimization:
   adam_foreach: false
 
 dmd:
+  # Required by the public DMD-only trainer. Setting this to false aborts early.
+  enabled: true
   real_lora_path: null
   fake_lora_init_path: null
   generator_update_interval: 5
@@ -98,4 +100,4 @@ seed: 42
 swanlab:
   enable_swanlab: false
   swanlab_project: "Echo-SR"
-  swanlab_experiment_name: "ltx2_19b_distill_dmd_gan"
+  swanlab_experiment_name: "ltx2_19b_dmd_webdataset"

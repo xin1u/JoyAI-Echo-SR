@@ -9,7 +9,7 @@ if [[ -n ${ECHO_SR_VENV:-} ]]; then
   source "$ECHO_SR_VENV/bin/activate"
 fi
 
-CONFIG=${CONFIG:-configs/echo_sr_ltx23_22b.yaml}
+CONFIG=${CONFIG:-configs/echo_sr_ltx2_19b_dmd.yaml}
 ACCELERATE_CONFIG=${ACCELERATE_CONFIG:-configs/accelerate/fsdp_8gpu.yaml}
 GPUS_PER_NODE=${NPROC_PER_NODE:-8}
 NUM_NODES=${NNODES:-1}
@@ -22,7 +22,12 @@ export PYTHONPATH="$REPO_ROOT/packages/ltx-core/src:$REPO_ROOT/packages/ltx-pipe
 export NCCL_IB_DISABLE=${NCCL_IB_DISABLE:-0}
 export NCCL_NET_GDR_LEVEL=${NCCL_NET_GDR_LEVEL:-2}
 
-printf '[Echo-SR] model=LTX-2.3-22B config=%s nodes=%s gpus_per_node=%s rank=%s\n' \
+if [[ ${TEACHER_DEGRADE:-} == 0 ]]; then export LTX_TEACHER_DEGRADE=false; fi
+if [[ ${TEACHER_DEGRADE:-} == 1 ]]; then export LTX_TEACHER_DEGRADE=true; fi
+if [[ ${STUDENT_DEGRADE:-} == 0 ]]; then export LTX_STUDENT_DEGRADE=false; fi
+if [[ ${STUDENT_DEGRADE:-} == 1 ]]; then export LTX_STUDENT_DEGRADE=true; fi
+
+printf '[Echo-SR] recipe=LTX-2-19B-DMD config=%s nodes=%s gpus_per_node=%s rank=%s\n' \
   "$CONFIG" "$NUM_NODES" "$GPUS_PER_NODE" "$NODE_RANK"
 
 accelerate launch \
@@ -32,5 +37,5 @@ accelerate launch \
   --machine_rank "$NODE_RANK" \
   --num_machines "$NUM_NODES" \
   --num_processes "$TOTAL_PROCESSES" \
-  packages/ltx-sr-trainer/scripts/train_stage2_sr_distill.py \
+  packages/ltx-sr-trainer/scripts/train_stage2_sr_dmd_webdataset.py \
   "$CONFIG"

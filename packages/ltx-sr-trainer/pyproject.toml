@@ -1,7 +1,7 @@
 [project]
 name = "ltx-sr-trainer"
-version = "0.2.0"
-description = "Echo-SR one-step stage-2 distillation trainers for LTX-2 and LTX-2.3"
+version = "0.3.0"
+description = "Echo-SR DMD one-step stage-2 trainers for LTX-2 19B and LTX-2.3 22B"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

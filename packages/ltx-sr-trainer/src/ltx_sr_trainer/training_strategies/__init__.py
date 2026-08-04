@@ -1,11 +1,9 @@
-from ltx_sr_trainer.training_strategies.stage2_sr_one_step import (
-    Stage2SRModelInputs,
-    Stage2SROneStepConfig,
-    Stage2SROneStepStrategy,
+from ltx_sr_trainer.training_strategies.stage2_sr_online import (
+    Stage2SROnlineConfig,
+    Stage2SROnlineStrategy,
 )
 
 __all__ = [
-    "Stage2SRModelInputs",
-    "Stage2SROneStepConfig",
-    "Stage2SROneStepStrategy",
+    "Stage2SROnlineConfig",
+    "Stage2SROnlineStrategy",
 ]

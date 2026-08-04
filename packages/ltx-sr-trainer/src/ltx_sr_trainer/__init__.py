@@ -1,18 +1,16 @@
-"""Experimental stage-2 SR training helpers for LTX-2."""
+"""Echo-SR WebDataset DMD training helpers for LTX models."""
 
-from ltx_sr_trainer.datasets import Stage2SRPairDataset, stage2_sr_pair_collate
+from ltx_sr_trainer.datasets import VideoSRDataset, video_sr_collate
 from ltx_sr_trainer.native_lora import NativeLoRAManager
 from ltx_sr_trainer.training_strategies import (
-    Stage2SRModelInputs,
-    Stage2SROneStepConfig,
-    Stage2SROneStepStrategy,
+    Stage2SROnlineConfig,
+    Stage2SROnlineStrategy,
 )
 
 __all__ = [
-    "Stage2SRPairDataset",
-    "stage2_sr_pair_collate",
+    "VideoSRDataset",
+    "video_sr_collate",
     "NativeLoRAManager",
-    "Stage2SRModelInputs",
-    "Stage2SROneStepConfig",
-    "Stage2SROneStepStrategy",
+    "Stage2SROnlineConfig",
+    "Stage2SROnlineStrategy",
 ]

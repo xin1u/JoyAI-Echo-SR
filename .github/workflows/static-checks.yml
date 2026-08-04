@@ -18,9 +18,9 @@ jobs:
         run: python -m compileall -q packages tools
       - name: Validate Shell scripts
         run: |
-          for script in scripts/*.sh packages/ltx-sr-trainer/scripts/*.sh; do
+          while IFS= read -r script; do
             bash -n "$script"
-          done
+          done < <(find scripts packages/ltx-sr-trainer/scripts -type f -name '*.sh' | sort)
       - name: Parse public configs and examples
         run: |
           python - <<'PY'
@@ -29,9 +29,17 @@ jobs:
 
           import yaml
 
+          configs = {}
           for path in Path("configs").rglob("*.yaml"):
               with path.open(encoding="utf-8") as handle:
-                  assert isinstance(yaml.safe_load(handle), dict), path
+                  config = yaml.safe_load(handle)
+                  assert isinstance(config, dict), path
+                  configs[path] = config
+          for path, config in configs.items():
+              if path.name.startswith("echo_sr_"):
+                  assert config["dmd"]["enabled"] is True, path
+                  assert "train_data_files" in config["data"], path
+                  assert "pair_data_root" not in config["data"], path
           for path in Path("examples").glob("*.json"):
               with path.open(encoding="utf-8") as handle:
                   assert isinstance(json.load(handle), dict), path
