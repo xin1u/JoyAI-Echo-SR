@@ -11,6 +11,7 @@
 <p>
   <a href="README_zh.md"><b>中文</b></a> ·
   <a href="https://huggingface.co/xin1u/Echo-SR"><b>Models</b></a> ·
+  <a href="#news"><b>News</b></a> ·
   <a href="#quick-start"><b>Quick Start</b></a> ·
   <a href="#training"><b>Training</b></a> ·
   <a href="#audio-video-long-video-sr"><b>Audio-Video SR</b></a> ·
@@ -44,6 +45,20 @@ family. It covers two product lines that share a repository but not a code path:
 > short-video DMD recipes; `packages/ltx-core-1.1` + `packages/ltx-trainer-1.1`
 > serve the audio-video recipes. Never put both on one `PYTHONPATH` — always
 > launch through the provided `scripts/*.sh`.
+
+## News
+
+- **`2026-08-07`** 🔍 **736p→2K audio-video multi-step** checkpoint released — exact 2× upscaling (2560×1472) via `CondSRPatchifyProj`, joint audio-video restoration.
+- **`2026-08-07`** 🎬 **Long-video audio-video SR** released — 736p→1K multi-step teacher + 1-step student, sliding-window inference with drop-first-frame i2v chaining over arbitrarily long clips.
+- **`2026-08-04`** ⚡ **Short-video DMD** released — one-step stage-2 SR generators for LTX-2 19B and LTX-2.3 22B, trained with DMD + GAN + pixel losses.
+
+## Roadmap
+
+- [x] Short-video 1-step DMD SR (LTX-2 19B / LTX-2.3 22B)
+- [x] Long-video audio-video SR, 736p→1K multi-step teacher
+- [x] Long-video audio-video SR, 736p→1K 1-step student
+- [x] Long-video audio-video SR, 736p→2K multi-step
+- [ ] Long-video audio-video SR, 736p→2K **1-step distilled** — training in progress, weights not yet released
 
 ## Highlights
 
