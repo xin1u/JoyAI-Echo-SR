@@ -4,13 +4,13 @@
 
 <div align="center">
 
-<h1>Echo-SR</h1>
+<h1>JoyAI-Echo-SR</h1>
 
 <p><strong>面向 LTX-2 19B 与 LTX-2.3 22B 的视频 / 音视频超分</strong></p>
 
 <p>
   <a href="README.md"><b>English</b></a> ·
-  <a href="https://huggingface.co/xin1u/Echo-SR"><b>模型权重</b></a> ·
+  <a href="https://huggingface.co/xin1u/JoyAI-Echo-SR"><b>模型权重</b></a> ·
   <a href="#动态"><b>动态</b></a> ·
   <a href="#快速开始"><b>快速开始</b></a> ·
   <a href="#训练"><b>训练</b></a> ·
@@ -19,17 +19,18 @@
 </p>
 
 <p>
-  <a href="https://github.com/xin1u/Echo-SR/actions/workflows/static-checks.yml"><img src="https://github.com/xin1u/Echo-SR/actions/workflows/static-checks.yml/badge.svg" alt="静态检查"></a>
+  <a href="https://github.com/xin1u/JoyAI-Echo-SR/actions/workflows/static-checks.yml"><img src="https://github.com/xin1u/JoyAI-Echo-SR/actions/workflows/static-checks.yml/badge.svg" alt="静态检查"></a>
   <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 或 3.12">
   <img src="https://img.shields.io/badge/PyTorch-2.7%2B-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch 2.7 或更高版本">
   <img src="https://img.shields.io/badge/Training-WebDataset-00A98F?style=flat-square" alt="WebDataset 训练">
   <img src="https://img.shields.io/badge/Modalities-Video%20%2B%20Audio-111111?style=flat-square" alt="视频 + 音频">
-  <a href="https://huggingface.co/xin1u/Echo-SR"><img src="https://img.shields.io/badge/Weights-Hugging%20Face-FFD21E?style=flat-square" alt="Hugging Face 权重"></a>
+  <a href="https://huggingface.co/xin1u/JoyAI-Echo-SR"><img src="https://img.shields.io/badge/Weights-Hugging%20Face-FFD21E?style=flat-square" alt="Hugging Face 权重"></a>
 </p>
 
 </div>
 
-Echo-SR 是面向 LTX 系列模型的**二阶段超分**研究代码，包含两条共用仓库但**不共用代码路径**
+JoyAI-Echo-SR 是 [JoyAI-Echo](https://github.com/jd-opensource/JoyAI-Echo) 的超分子项目，
+面向 LTX 系列模型的**二阶段超分**研究代码，包含两条共用仓库但**不共用代码路径**
 的产品线：
 
 - **短视频、纯视频 DMD** —— LTX-2 19B 与 LTX-2.3 22B 的一步生成器，由冻结三步教师经
@@ -154,8 +155,8 @@ tools/build_train_index.py              WebDataset shard 索引生成工具
 使用 `uv`：
 
 ```bash
-git clone https://github.com/xin1u/Echo-SR.git
-cd Echo-SR
+git clone https://github.com/xin1u/JoyAI-Echo-SR.git
+cd JoyAI-Echo-SR
 uv sync --all-packages --all-extras
 source .venv/bin/activate
 ```
@@ -184,10 +185,10 @@ python -m pip install -e packages/ltx-core \
 ### 2. 下载权重
 
 Echo-SR 生成器权重发布在
-[Hugging Face](https://huggingface.co/xin1u/Echo-SR)：
+[Hugging Face](https://huggingface.co/xin1u/JoyAI-Echo-SR)：
 
 ```bash
-hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
+hf download xin1u/JoyAI-Echo-SR --local-dir checkpoints/echo-sr
 ```
 
 | 模型家族 | 已发布生成器 |

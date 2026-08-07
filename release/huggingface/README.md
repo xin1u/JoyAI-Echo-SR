@@ -10,14 +10,16 @@ tags:
 ---
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/xin1u/Echo-SR/main/assets/echo-sr-hero.jpg" alt="Echo-SR video super-resolution" width="100%">
+  <img src="https://raw.githubusercontent.com/xin1u/JoyAI-Echo-SR/main/assets/echo-sr-hero.jpg" alt="Echo-SR video super-resolution" width="100%">
 </p>
 
-# Echo-SR
+# JoyAI-Echo-SR
 
-Echo-SR provides super-resolution adapters for the LTX model family, covering
+JoyAI-Echo-SR is the super-resolution sub-project of
+[JoyAI-Echo](https://github.com/jd-opensource/JoyAI-Echo). It provides
+super-resolution adapters for the LTX model family, covering
 two product lines. Training and inference code is available in the
-[Echo-SR GitHub repository](https://github.com/xin1u/Echo-SR).
+[JoyAI-Echo-SR GitHub repository](https://github.com/xin1u/JoyAI-Echo-SR).
 
 - **Short-video, video-only DMD** — one-step generators for LTX-2 19B and
   LTX-2.3 22B, distilled with DMD distribution matching + GAN + pixel losses.
@@ -62,7 +64,7 @@ Two auxiliary assets required by the AV configs ship alongside the weights:
 Download everything:
 
 ```bash
-hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
+hf download xin1u/JoyAI-Echo-SR --local-dir checkpoints/echo-sr
 ```
 
 ## Usage
@@ -72,8 +74,8 @@ Select assets matching the LTX model family; never mix 19B and 22B assets.
 Short-video DMD inference:
 
 ```bash
-git clone https://github.com/xin1u/Echo-SR.git
-cd Echo-SR
+git clone https://github.com/xin1u/JoyAI-Echo-SR.git
+cd JoyAI-Echo-SR
 
 bash scripts/infer.sh \
   --input-video input_lq.mp4 \

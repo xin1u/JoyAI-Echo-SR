@@ -230,7 +230,7 @@ LTX-2.3 22B dev  +  distilled-lora-384-1.1 (structure only)
         └── av_sr_2k_multistep.yaml   ──►  av-sr-2k-multistep-step08000.safetensors
 ```
 
-All three are published on [Hugging Face](https://huggingface.co/xin1u/Echo-SR)
+All three are published on [Hugging Face](https://huggingface.co/xin1u/JoyAI-Echo-SR)
 together with `tinydecoder/taeltx2_3_wide.pth` and
 `prompt/sr_prompt_embeddings.pt`. The 2K checkpoint is independent of the 1K
 pair; its `CondSRPatchifyProj` is sized for the 80×46 HQ latent grid, so run it

@@ -4,13 +4,13 @@
 
 <div align="center">
 
-<h1>Echo-SR</h1>
+<h1>JoyAI-Echo-SR</h1>
 
 <p><strong>Video and audio-video super-resolution for LTX-2 19B and LTX-2.3 22B</strong></p>
 
 <p>
   <a href="README_zh.md"><b>中文</b></a> ·
-  <a href="https://huggingface.co/xin1u/Echo-SR"><b>Models</b></a> ·
+  <a href="https://huggingface.co/xin1u/JoyAI-Echo-SR"><b>Models</b></a> ·
   <a href="#news"><b>News</b></a> ·
   <a href="#quick-start"><b>Quick Start</b></a> ·
   <a href="#training"><b>Training</b></a> ·
@@ -19,18 +19,20 @@
 </p>
 
 <p>
-  <a href="https://github.com/xin1u/Echo-SR/actions/workflows/static-checks.yml"><img src="https://github.com/xin1u/Echo-SR/actions/workflows/static-checks.yml/badge.svg" alt="Static checks"></a>
+  <a href="https://github.com/xin1u/JoyAI-Echo-SR/actions/workflows/static-checks.yml"><img src="https://github.com/xin1u/JoyAI-Echo-SR/actions/workflows/static-checks.yml/badge.svg" alt="Static checks"></a>
   <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 or 3.12">
   <img src="https://img.shields.io/badge/PyTorch-2.7%2B-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch 2.7 or newer">
   <img src="https://img.shields.io/badge/Training-WebDataset-00A98F?style=flat-square" alt="WebDataset training">
   <img src="https://img.shields.io/badge/Modalities-Video%20%2B%20Audio-111111?style=flat-square" alt="Video and audio">
-  <a href="https://huggingface.co/xin1u/Echo-SR"><img src="https://img.shields.io/badge/Weights-Hugging%20Face-FFD21E?style=flat-square" alt="Hugging Face weights"></a>
+  <a href="https://huggingface.co/xin1u/JoyAI-Echo-SR"><img src="https://img.shields.io/badge/Weights-Hugging%20Face-FFD21E?style=flat-square" alt="Hugging Face weights"></a>
 </p>
 
 </div>
 
-Echo-SR is a research release for **stage-2 super-resolution** on the LTX model
-family. It covers two product lines that share a repository but not a code path:
+JoyAI-Echo-SR is the super-resolution sub-project of
+[JoyAI-Echo](https://github.com/jd-opensource/JoyAI-Echo), a research release
+for **stage-2 super-resolution** on the LTX model family. It covers two product
+lines that share a repository but not a code path:
 
 - **Short-video, video-only DMD** — one-step generators for LTX-2 19B and
   LTX-2.3 22B, distilled from frozen three-step teachers with DMD distribution
@@ -160,8 +162,8 @@ Requirements:
 Using `uv`:
 
 ```bash
-git clone https://github.com/xin1u/Echo-SR.git
-cd Echo-SR
+git clone https://github.com/xin1u/JoyAI-Echo-SR.git
+cd JoyAI-Echo-SR
 uv sync --all-packages --all-extras
 source .venv/bin/activate
 ```
@@ -191,10 +193,10 @@ python -m pip install -e packages/ltx-core \
 ### 2. Download Checkpoints
 
 Echo-SR generator weights are released on
-[Hugging Face](https://huggingface.co/xin1u/Echo-SR):
+[Hugging Face](https://huggingface.co/xin1u/JoyAI-Echo-SR):
 
 ```bash
-hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
+hf download xin1u/JoyAI-Echo-SR --local-dir checkpoints/echo-sr
 ```
 
 | Model family | Released generator |
