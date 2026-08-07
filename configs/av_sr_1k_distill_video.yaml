@@ -1,5 +1,5 @@
 # =============================================================================
-# Echo-SR — 1-step distillation, VIDEO ONLY  (released 1-step weights)
+# Echo-SR — 1-step distillation, video-focused final phase  (released weights)
 # =============================================================================
 # Recipe:  CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 # Entry:   packages/echo-av-distill/scripts/train_distill.py
@@ -11,6 +11,11 @@
 #
 # NOTE `distillation.enable_dmd: false` — teacher-trajectory distillation with
 # LPIPS (6.0) + Haar wavelet (8.0) + temporal losses, NOT DMD2.
+#
+# NOTE `with_audio: false` selects video-focused LOSSES for this final phase
+# only. The audio branch was trained in an earlier joint audio-video
+# distillation phase, and checkpoint saving merges the untrained audio adapters
+# from the teacher, so the released weights run joint audio-video inference.
 # =============================================================================
 
 model:
@@ -95,7 +100,7 @@ optimizer_params:
 acceleration:
   mixed_precision_mode: "bf16"
 
-# Data: tar-based webdataset (video only)
+# Data: tar-based webdataset (video-only samples; audio losses are off here)
 data:
   dataset_type: "tar"
   data_index_files:
@@ -123,7 +128,7 @@ swanlab:
   project: "Echo_SR_Distill_Video"
   experiment_name: null
   mode: "online"
-  tags: ["dmd2", "1k", "video-only", "tar-data"]
+  tags: ["distill", "1k", "video-focused", "tar-data"]
 
 prompt_cache_path: "checkpoints/prompt/sr_prompt_embeddings.pt"
 

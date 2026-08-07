@@ -19,7 +19,7 @@ scripts/
   train_online_v3.py        736→1K AV restoration, on-the-fly degradation
   train_online.py           736→2K AV restoration (CondSRPatchifyProj position mapping)
   infer_sr_long.py          multi-step sliding-window long-video inference (audio + video)
-  infer_distill_v3_long.py  1-step sliding-window long-video inference
+  infer_distill_v3_long.py  1-step sliding-window long-video inference (audio + video)
 src/ltx_av_sr_trainer/
   strategy.py               AV restoration training strategy (LQ latent conditioning)
   online_av_dataset.py      raw mp4 + caption json, degradation applied online

@@ -10,8 +10,9 @@
 # distribution-matching loss is skipped and the critic is never updated
 # (see packages/echo-av-distill/src/echo_sr/training/distiller.py).
 #
-# No weights are released for this audio-video branch; the released 1-step
-# checkpoint comes from configs/av_sr_1k_distill_video.yaml.
+# No weights are released for this config; the released 1-step checkpoint
+# comes from configs/av_sr_1k_distill_video.yaml (video-focused final phase,
+# still audio-video capable at inference).
 # =============================================================================
 
 model:

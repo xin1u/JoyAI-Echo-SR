@@ -16,7 +16,7 @@ short-video, video-only DMD recipes see the main [README](../README.md).
 | --- | --- | --- | --- |
 | `av_sr_1k_multistep.yaml` | `train_online_v3.py` | `train_av_sr_1k.sh` | 1920×1152, audio + video |
 | `av_sr_2k_multistep.yaml` | `train_online.py` | `train_av_sr_2k.sh` | 2560×1472, audio + video |
-| `av_sr_1k_distill{,_video}.yaml` | `train_distill.py` | `train_av_distill_1k.sh` | 1920×1152, 1 step |
+| `av_sr_1k_distill{,_video}.yaml` | `train_distill.py` | `train_av_distill_1k.sh` | 1920×1152, audio + video, 1 step |
 
 All three take 1280×736 (`lq_resolution`) as input and 121 frames per sample.
 
@@ -25,7 +25,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_1k.sh
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_2k.sh
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_distill_1k.sh
 
-# the config that produced the released 1-step weights
+# the config that produced the released 1-step weights (video-focused final phase)
 CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 ```
 
@@ -125,8 +125,11 @@ modalities in layers 0–23 while leaving 24–47 free, so early layers stay
 modality-specific and only late layers learn joint representations.
 
 Adapters are rank-384 / alpha-384 LoRA over ~40 module patterns, matching the
-shape of the official LTX-2.3 distilled LoRA. The video-only distillation config
-drops the 15 audio-specific patterns.
+shape of the official LTX-2.3 distilled LoRA. The video-focused distillation
+config lists 16 fewer audio-specific patterns as *trainable*, but the saved
+checkpoint still carries the full audio adapter set — untrained audio modules
+are merged in from the teacher at save time (see
+[Distillation](#distillation-not-dmd-by-default)).
 
 ### Drop-first-frame i2v
 
@@ -168,7 +171,7 @@ for that configuration.
 
 Loss weights differ sharply between the two branches:
 
-| | `av_sr_1k_distill` (A+V) | `av_sr_1k_distill_video` (V) |
+| | `av_sr_1k_distill` (A+V losses) | `av_sr_1k_distill_video` (V-focused losses) |
 | --- | --- | --- |
 | `lpips_loss_weight` | 2.0 | 6.0 |
 | `wavelet_loss_weight` | 0.0 | 8.0 |
@@ -180,6 +183,29 @@ Loss weights differ sharply between the two branches:
 
 `student_init: "from_teacher"` means the student LoRA starts as a copy of the
 teacher's weights rather than from scratch.
+
+### The released 1-step checkpoint is audio-video capable
+
+`with_audio: false` in `av_sr_1k_distill_video.yaml` switches the **losses** to
+video-focused terms and shrinks the *trainable* module list — it does not strip
+the audio branch from the model or the checkpoint:
+
+- The released run resumed from a joint audio-video distillation checkpoint
+  (`enable_dmd: false`, `audio_loss_weight: 2.0`, `with_audio: true`), where the
+  audio LoRA was trained. The video-focused phase then continued sharpening the
+  video branch on tar-shard data.
+- `_save_checkpoint` in `echo_sr/training/distiller.py` merges every
+  audio/`av_ca` adapter tensor that is not in the student's `target_modules`
+  from the teacher into the saved file, so the output always contains the full
+  3,330-tensor set (2,136 audio-branch tensors) with the same key layout as the
+  multi-step teacher.
+- `infer_distill_v3_long.py` loads the audio VAE and vocoder unconditionally
+  and denoises audio latents in the same single Euler step as video. There is
+  no audio off-switch at inference; a silent input just yields silent output.
+
+Treat `av-sr-1k-distill-video-step005100.safetensors` as a 1-step
+**audio-video** SR model. The `-video` in the filename records the final
+training phase, not a capability limit.
 
 ## Weight chain
 

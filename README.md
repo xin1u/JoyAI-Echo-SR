@@ -63,7 +63,7 @@ family. It covers two product lines that share a repository but not a code path:
 | **LTX-2.3 22B DMD** | LTX-2.3 22B dev | video | 1 | `scripts/train_dmd_22b.sh` |
 | **AV-SR 736p→1K** | LTX-2.3 22B dev | audio + video | multi | `scripts/train_av_sr_1k.sh` |
 | **AV-SR 736p→2K** | LTX-2.3 22B dev | audio + video | multi | `scripts/train_av_sr_2k.sh` |
-| **AV-SR 1K distill** | LTX-2.3 22B dev | audio + video / video | 1 | `scripts/train_av_distill_1k.sh` |
+| **AV-SR 1K distill** | LTX-2.3 22B dev | audio + video | 1 | `scripts/train_av_distill_1k.sh` |
 
 The two DMD recipes share one trainer and data contract. The three AV recipes
 share a different trainer and the 1.1 vendored snapshot. Model-family
@@ -105,7 +105,7 @@ configs/
 ├── av_sr_1k_multistep.yaml            736p→1K audio-video, multi-step teacher
 ├── av_sr_2k_multistep.yaml            736p→2K audio-video, multi-step
 ├── av_sr_1k_distill.yaml              1-step distillation, audio + video
-└── av_sr_1k_distill_video.yaml        1-step distillation, video only (released weights)
+└── av_sr_1k_distill_video.yaml        1-step distillation, video-focused final phase (released weights)
 docs/av_sr_training.md                 Audio-video recipes: data contract and hyperparameters
 packages/
 ├── ltx-core/                           LTX core snapshot — DMD path
@@ -187,10 +187,13 @@ hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 | LTX-2 19B | `echo-sr-ltx2-19b-dmd-step18300.safetensors` |
 | LTX-2.3 22B | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` |
 | LTX-2.3 22B audio-video, multi-step teacher | `av-sr-1k-multistep-step09900.safetensors` |
-| LTX-2.3 22B video, 1-step student | `av-sr-1k-distill-video-step005100.safetensors` |
+| LTX-2.3 22B audio-video, 1-step student | `av-sr-1k-distill-video-step005100.safetensors` |
 
 The last two form a pair: the 1-step student was distilled from the multi-step
-teacher above it. Two auxiliary assets are published alongside them and are
+teacher above it, and **both restore audio and video jointly**. The `-video` in
+the student's filename refers to the losses of its final distillation phase,
+not to its capability — see
+[The 1-step student is audio-video capable](#the-1-step-student-is-audio-video-capable). Two auxiliary assets are published alongside them and are
 required by the audio-video configs — `tinydecoder/taeltx2_3_wide.pth` (fast
 latent preview decoder used during validation) and
 `prompt/sr_prompt_embeddings.pt` (precomputed prompt embeddings, so the 1-step
@@ -370,7 +373,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_2k.sh
 # 1-step distillation from the teacher above
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_distill_1k.sh
 
-# video-only variant — this is the one that produced the released 1-step weights
+# final video-focused phase — this is the one that produced the released 1-step weights
 CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 ```
 
@@ -392,6 +395,30 @@ Setting `enable_dmd: true` re-enables the DMD2 path in
 `packages/echo-av-distill/src/echo_sr/training/distiller.py`; no weights are
 released for that configuration.
 
+### The 1-step student is audio-video capable
+
+The released 1-step checkpoint was produced with
+`configs/av_sr_1k_distill_video.yaml`, whose losses are video-focused
+(`with_audio: false` — LPIPS, Haar wavelet, temporal; no audio STFT term). That
+is a statement about the **final training phase**, not about the model:
+
+- The checkpoint descends from a joint **audio-video** distillation run. Its
+  audio branch — `audio_patchify_proj`, audio attention/FF LoRA in all 48
+  blocks, `audio_proj_out`, the audio adaLN stacks, and the A↔V cross-attention
+  gates — was trained there and carried through every later phase; the video
+  branch was then further sharpened under the video-focused losses.
+- Checkpoint saving (`_save_checkpoint` in
+  `packages/echo-av-distill/src/echo_sr/training/distiller.py`) always writes
+  the full 3,330-tensor adapter set, including all 2,136 audio-branch tensors,
+  so the released file is structurally identical to the multi-step teacher.
+- The 1-step inference script (`infer_distill_v3_long.py`) unconditionally
+  loads the audio VAE and vocoder, denoises audio latents alongside video in
+  the same single step, and muxes the enhanced track into the output whenever
+  the input has audio.
+
+In short: use it as a **1-step audio-video SR model**. Inputs without an audio
+track simply produce silent video.
+
 ### Inference
 
 ```bash
@@ -401,7 +428,7 @@ NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
   --checkpoint checkpoints/echo-sr/av-sr-1k-multistep-step09900.safetensors \
   --output-dir outputs/av_sr_long
 
-# 1-step
+# 1-step, audio + video output
 NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
   --input input_736p.mp4 \
   --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors \

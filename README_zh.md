@@ -60,7 +60,7 @@ Echo-SR 是面向 LTX 系列模型的**二阶段超分**研究代码，包含两
 | **LTX-2.3 22B DMD** | LTX-2.3 22B dev | 视频 | 1 | `scripts/train_dmd_22b.sh` |
 | **AV-SR 736p→1K** | LTX-2.3 22B dev | 音频 + 视频 | 多步 | `scripts/train_av_sr_1k.sh` |
 | **AV-SR 736p→2K** | LTX-2.3 22B dev | 音频 + 视频 | 多步 | `scripts/train_av_sr_2k.sh` |
-| **AV-SR 1K 蒸馏** | LTX-2.3 22B dev | 音视频 / 纯视频 | 1 | `scripts/train_av_distill_1k.sh` |
+| **AV-SR 1K 蒸馏** | LTX-2.3 22B dev | 音频 + 视频 | 1 | `scripts/train_av_distill_1k.sh` |
 
 两个 DMD 方案共用一套 trainer 和数据协议；三个 AV 方案共用另一套 trainer 与 1.1 快照。
 基座、官方蒸馏 LoRA 与空间上采样器必须按模型家族分别配置，不能交叉混用。
@@ -99,7 +99,7 @@ configs/
 ├── av_sr_1k_multistep.yaml            736p→1K 音视频，多步教师
 ├── av_sr_2k_multistep.yaml            736p→2K 音视频，多步
 ├── av_sr_1k_distill.yaml              一步蒸馏，音频 + 视频
-└── av_sr_1k_distill_video.yaml        一步蒸馏，纯视频（对应已发布权重）
+└── av_sr_1k_distill_video.yaml        一步蒸馏，末段视频侧重损失（对应已发布权重）
 docs/av_sr_training.md                 音视频方案：数据契约与超参
 packages/
 ├── ltx-core/                           LTX core 快照 —— DMD 路径
@@ -180,9 +180,11 @@ hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 | LTX-2 19B | `echo-sr-ltx2-19b-dmd-step18300.safetensors` |
 | LTX-2.3 22B | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` |
 | LTX-2.3 22B 音视频多步教师 | `av-sr-1k-multistep-step09900.safetensors` |
-| LTX-2.3 22B 纯视频一步学生 | `av-sr-1k-distill-video-step005100.safetensors` |
+| LTX-2.3 22B 音视频一步学生 | `av-sr-1k-distill-video-step005100.safetensors` |
 
-后两个是一对：一步学生正是由它上面那个多步教师蒸馏而来。同时还发布了两个音视频配置
+后两个是一对：一步学生正是由它上面那个多步教师蒸馏而来，**两者都做音视频联合修复**。
+一步权重文件名里的 `-video` 指的是其最后一段蒸馏采用视频侧重损失，而不是它只能出视频
+——见[一步学生支持音视频推理](#一步学生支持音视频推理)。同时还发布了两个音视频配置
 必须的辅助资产 —— `tinydecoder/taeltx2_3_wide.pth`（验证阶段用的快速 latent 预览
 解码器）和 `prompt/sr_prompt_embeddings.pt`（预计算 prompt embedding，使一步路径完全
 不加载文本编码器）。
@@ -337,7 +339,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_2k.sh
 # 从上面的教师做一步蒸馏
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_distill_1k.sh
 
-# 纯视频分支 —— 已发布的一步权重出自这条
+# 末段视频侧重损失 —— 已发布的一步权重出自这条
 CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 ```
 
@@ -355,6 +357,23 @@ CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 `packages/echo-av-distill/src/echo_sr/training/distiller.py` 里的 DMD2 路径，但该配置下
 没有发布权重。
 
+### 一步学生支持音视频推理
+
+已发布的一步权重由 `configs/av_sr_1k_distill_video.yaml` 训出，其损失是视频侧重的
+（`with_audio: false` —— LPIPS、Haar 小波、时序损失，无音频 STFT 项）。但这说的是
+**最后一段训练**，不是模型能力：
+
+- 该权重继承自一次**音视频联合**蒸馏：音频分支 —— `audio_patchify_proj`、全部 48 层的
+  音频 attention / FF LoRA、`audio_proj_out`、音频 adaLN、A↔V 跨注意力 gate ——
+  在那一阶段训练完成并一路带到发布权重里；之后的视频侧重阶段只是继续强化视频分支。
+- 存 checkpoint 时（`packages/echo-av-distill/src/echo_sr/training/distiller.py` 的
+  `_save_checkpoint`）总是写出完整的 3,330 个 adapter 张量，其中音频分支 2,136 个，
+  结构与多步教师完全一致。
+- 一步推理脚本（`infer_distill_v3_long.py`）无条件加载音频 VAE 和 vocoder，音频 latent
+  与视频在同一步里一起去噪，输入带音轨时把增强后的音轨封装进输出。
+
+简言之：请把它当作**一步音视频超分模型**使用。输入没有音轨时输出即为无声视频。
+
 ### 推理
 
 ```bash
@@ -364,7 +383,7 @@ NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
   --checkpoint checkpoints/echo-sr/av-sr-1k-multistep-step09900.safetensors \
   --output-dir outputs/av_sr_long
 
-# 一步
+# 一步，输出音频 + 视频
 NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
   --input input_736p.mp4 \
   --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors \

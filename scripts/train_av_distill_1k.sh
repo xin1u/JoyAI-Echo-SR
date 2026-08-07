@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Echo-SR — 1-step distillation from the multi-step AV teacher.
 #
-# Default config is the audio-video branch. For the video-only branch that
-# produced the released 1-step weights:
+# Default config is the audio-video-loss branch. For the video-focused final
+# phase that produced the released 1-step weights (which remain audio-video
+# capable — the audio adapters carry over from the joint phase and the teacher):
 #   CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 #
 # Both configs set `distillation.enable_dmd: false` — teacher-trajectory

@@ -43,10 +43,17 @@ Use the repository-level launcher, which sets `PYTHONPATH` to this package plus 
 LTX-2 **1.1** vendored snapshot (`packages/ltx-core-1.1`, `packages/ltx-trainer-1.1`):
 
 ```bash
-bash scripts/train_av_distill_1k.sh          # configs/av_sr_1k_distill.yaml (audio + video)
+bash scripts/train_av_distill_1k.sh          # configs/av_sr_1k_distill.yaml (audio + video losses)
 CONFIG=configs/av_sr_1k_distill_video.yaml \
-  bash scripts/train_av_distill_1k.sh        # video-only — matches the released weights
+  bash scripts/train_av_distill_1k.sh        # video-focused losses — the released weights' final phase
 ```
+
+The released checkpoint `av-sr-1k-distill-video-step005100.safetensors` is
+**audio-video capable** despite the video-focused final phase: its audio branch
+was trained in an earlier joint audio-video distillation phase, and checkpoint
+saving (`src/echo_sr/training/distiller.py`, `_save_checkpoint`) merges every
+audio adapter not in the student's `target_modules` from the teacher, so the
+file always carries the complete audio-video adapter set.
 
 ## Inference
 

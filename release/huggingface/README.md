@@ -3,6 +3,7 @@ license: other
 library_name: safetensors
 tags:
   - video-super-resolution
+  - audio-video
   - ltx-video
   - dmd
   - lora
@@ -14,35 +15,55 @@ tags:
 
 # Echo-SR
 
-Echo-SR provides one-step DMD video super-resolution adapters for LTX-2 19B
-and LTX-2.3 22B. Training and inference code is available in the
+Echo-SR provides super-resolution adapters for the LTX model family, covering
+two product lines. Training and inference code is available in the
 [Echo-SR GitHub repository](https://github.com/xin1u/Echo-SR).
+
+- **Short-video, video-only DMD** — one-step generators for LTX-2 19B and
+  LTX-2.3 22B, distilled with DMD distribution matching + GAN + pixel losses.
+- **Long-video audio-video SR** — 736p → 1K joint audio-video enhancement on
+  LTX-2.3 22B: a multi-step teacher and a 1-step student, with sliding-window
+  inference over arbitrarily long clips.
 
 ## Released Weights
 
-| File | Model family | Training step | Format |
-| --- | --- | ---: | --- |
-| `echo-sr-ltx2-19b-dmd-step18300.safetensors` | LTX-2 19B | 18,300 | BF16 LoRA adapter |
-| `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` | LTX-2.3 22B | 4,600 | BF16 LoRA adapter |
+| File | Line | Model family | Steps | Format |
+| --- | --- | --- | ---: | --- |
+| `echo-sr-ltx2-19b-dmd-step18300.safetensors` | DMD | LTX-2 19B | 18,300 | BF16 LoRA |
+| `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` | DMD | LTX-2.3 22B | 4,600 | BF16 LoRA |
+| `av-sr-1k-multistep-step09900.safetensors` | AV SR | LTX-2.3 22B | 9,900 | BF16 LoRA |
+| `av-sr-1k-distill-video-step005100.safetensors` | AV SR | LTX-2.3 22B | 5,100 | BF16 LoRA |
 
-Download both adapters:
+The two AV files form a teacher→student pair: the 1-step
+`av-sr-1k-distill-video` model was distilled from the multi-step
+`av-sr-1k-multistep` teacher (teacher-trajectory distillation with LPIPS, Haar
+wavelet, and temporal losses — `enable_dmd: false`, so it is **not** a DMD
+student). **Both checkpoints restore audio and video jointly.** The `-video`
+in the student's filename refers to its final distillation phase, which used
+video-focused losses; the audio branch was trained in an earlier joint
+audio-video phase and is carried in full (the file is structurally identical
+to the teacher — 3,330 tensors, 2,136 of them audio-branch). The 1-step
+inference path denoises audio latents in the same single step as video and
+muxes the enhanced track into the output.
+
+Two auxiliary assets required by the AV configs ship alongside the weights:
+
+| File | Purpose |
+| --- | --- |
+| `tinydecoder/taeltx2_3_wide.pth` | TAEHV fast latent preview decoder (validation / 1-step decode) |
+| `prompt/sr_prompt_embeddings.pt` | Precomputed SR prompt embeddings — the 1-step path never loads a text encoder |
+
+Download everything:
 
 ```bash
 hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 ```
 
-Download one adapter:
-
-```bash
-hf download xin1u/Echo-SR \
-  echo-sr-ltx2.3-22b-dmd-step04600.safetensors \
-  --local-dir checkpoints/echo-sr
-```
-
 ## Usage
 
-Select the adapter that matches the LTX model family. Do not load the 19B
-adapter into the 22B base model or the 22B adapter into the 19B base model.
+Select assets matching the LTX model family; never mix 19B and 22B assets.
+
+Short-video DMD inference:
 
 ```bash
 git clone https://github.com/xin1u/Echo-SR.git
@@ -56,14 +77,25 @@ bash scripts/infer.sh \
   --student-lora-path checkpoints/echo-sr/echo-sr-ltx2.3-22b-dmd-step04600.safetensors \
   --spatial-upsampler-path checkpoints/ltx-2.3-spatial-upscaler-x2-1.1.safetensors \
   --gemma-root checkpoints/gemma-3-12b \
-  --target-height 1024 \
-  --target-width 1536 \
-  --num-frames 121 \
-  --fps 24
+  --target-height 1024 --target-width 1536 --num-frames 121 --fps 24
 ```
 
-The public release is video-only. Audio parameters are not trained and the
-provided inference entry does not emit an audio track.
+Long-video AV super-resolution (736p input, any length):
+
+```bash
+# multi-step, audio + video output
+NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-1k-multistep-step09900.safetensors
+
+# 1-step, audio + video output, drop-first-frame i2v chaining across windows
+NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors
+```
+
+See `docs/av_sr_training.md` in the GitHub repository for training recipes and
+the data contract.
 
 ## Checksums
 
@@ -72,5 +104,7 @@ SHA256 values are recorded in `checksums.sha256`.
 ## License
 
 The weights and code are subject to the LTX-2 Community License Agreement and
-the additional terms of their respective base model releases. See the GitHub
-repository for complete attribution and notices.
+the additional terms of their respective base model releases. The TinyDecoder
+architecture derives from MIT-licensed TAESD/TAEHV work by Ollin Boer Bohan;
+the released weights were trained by us against the LTX-2.3 video VAE. See the
+GitHub repository for complete attribution and notices.
