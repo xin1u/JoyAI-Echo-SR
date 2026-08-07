@@ -3,9 +3,23 @@ ltx-core = { workspace = true }
 ltx-pipelines = { workspace = true }
 ltx-trainer = { workspace = true }
 ltx-sr-trainer = { workspace = true }
+ltx-av-sr-trainer = { workspace = true }
+echo-av-distill = { workspace = true }
 
+# Members are listed explicitly rather than globbed. `packages/ltx-core-1.1` and
+# `packages/ltx-trainer-1.1` are deliberately NOT members: they ship the same
+# top-level Python modules (`ltx_core`, `ltx_trainer`) as the 1.0 snapshot and
+# cannot be installed into the same environment. The long-video audio-video
+# recipes reach them through PYTHONPATH instead — see scripts/train_av_*.sh.
 [tool.uv.workspace]
-members = ["packages/*"]
+members = [
+    "packages/ltx-core",
+    "packages/ltx-pipelines",
+    "packages/ltx-trainer",
+    "packages/ltx-sr-trainer",
+    "packages/ltx-av-sr-trainer",
+    "packages/echo-av-distill",
+]
 
 [[tool.uv.index]]
 name = "pypi"

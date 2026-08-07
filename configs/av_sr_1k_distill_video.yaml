@@ -1,0 +1,131 @@
+# =============================================================================
+# Echo-SR — 1-step distillation, VIDEO ONLY  (released 1-step weights)
+# =============================================================================
+# Recipe:  CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
+# Entry:   packages/echo-av-distill/scripts/train_distill.py
+# Vendor:  LTX-2 1.1  (packages/ltx-core-1.1, packages/ltx-trainer-1.1)
+#
+# This config produced the released checkpoint
+# `av-sr-1k-distill-video-step005100.safetensors`. Its teacher is the released
+# multi-step checkpoint `av-sr-1k-multistep-step09900.safetensors`.
+#
+# NOTE `distillation.enable_dmd: false` — teacher-trajectory distillation with
+# LPIPS (6.0) + Haar wavelet (8.0) + temporal losses, NOT DMD2.
+# =============================================================================
+
+model:
+  model_path: "checkpoints/ltx-2.3-22b-dev.safetensors"
+  text_encoder_path: "checkpoints/gemma-3-12b"
+  lora_structure_from: "checkpoints/ltx-2.3-22b-distilled-lora-384-1.1.safetensors"
+  load_checkpoint: null
+
+distillation:
+  teacher_checkpoint: "checkpoints/echo-sr/av-sr-1k-multistep-step09900.safetensors"
+  student_init: "from_teacher"
+  enable_dmd: false
+  dm_loss_weight: 1.0
+  reg_loss_weight: 0.001
+  pixel_loss_weight: 1.0
+  lpips_loss_weight: 6.0
+  wavelet_loss_weight: 8.0
+  temporal_loss_weight: 1.0
+  latent_freq_loss_weight: 0.1
+  pixel_temporal_loss_weight: 0.0
+  num_decode_frames: 4
+  audio_e2e_loss_weight: 0.0
+  audio_stft_loss_weight: 0.0
+  critic_lr: 5e-5
+  critic_update_interval: 1
+  train_tiny_decoder: false
+  use_full_decoder: true
+
+lora:
+  rank: 384
+  alpha: 384
+  target_modules:
+    - "to_k"
+    - "to_q"
+    - "to_v"
+    - "to_out.0"
+    - "to_gate_logits"
+    - "ff.net.0.proj"
+    - "ff.net.2"
+    - "patchify_proj"
+    - "proj_out"
+    - "adaln_single.linear"
+    - "adaln_single.emb.timestep_embedder.linear_1"
+    - "adaln_single.emb.timestep_embedder.linear_2"
+    - "prompt_adaln_single.linear"
+    - "prompt_adaln_single.emb.timestep_embedder.linear_1"
+    - "prompt_adaln_single.emb.timestep_embedder.linear_2"
+    - "av_ca_a2v_gate_adaln_single.linear"
+    - "av_ca_a2v_gate_adaln_single.emb.timestep_embedder.linear_1"
+    - "av_ca_a2v_gate_adaln_single.emb.timestep_embedder.linear_2"
+    - "av_ca_video_scale_shift_adaln_single.linear"
+    - "av_ca_video_scale_shift_adaln_single.emb.timestep_embedder.linear_1"
+    - "av_ca_video_scale_shift_adaln_single.emb.timestep_embedder.linear_2"
+
+training_strategy:
+  name: "av_restoration"
+  with_audio: false
+  lq_drop_prob: 0.0
+  condition_noise_min: 0.0
+  condition_noise_max: 0.6
+  audio_condition_noise_min: 0.0
+  audio_condition_noise_max: 0.6
+  audio_loss_weight: 0.0
+  first_frame_conditioning_p: 0.5
+  num_val_samples: 1
+
+optimization:
+  learning_rate: 5e-5
+  steps: 50000
+  batch_size: 1
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  enable_gradient_checkpointing: true
+  scheduler_type: "constant_with_warmup"
+  scheduler_params:
+    warmup_steps: 10
+
+optimizer_params:
+  betas: [0.9, 0.99]
+  weight_decay: 0.0
+
+acceleration:
+  mixed_precision_mode: "bf16"
+
+# Data: tar-based webdataset (video only)
+data:
+  dataset_type: "tar"
+  data_index_files:
+    - "data/train_index/av_sr.json"
+  hq_resolution: [1920, 1152, 121]
+  lq_resolution: [1280, 736, 121]
+  num_dataloader_workers: 1
+
+validation:
+  interval: 50
+  inference_steps: 1
+  frame_rate: 25.0
+  condition_noise: 0.3
+  tiny_decoder_path: "checkpoints/tinydecoder/taeltx2_3_wide.pth"
+  val_clips_dir: "data/val_clips"
+
+checkpoints:
+  interval: 100
+
+logging:
+  log_interval: 1
+
+swanlab:
+  enabled: false  # set true and export SWANLAB_API_KEY to enable tracking
+  project: "Echo_SR_Distill_Video"
+  experiment_name: null
+  mode: "online"
+  tags: ["dmd2", "1k", "video-only", "tar-data"]
+
+prompt_cache_path: "checkpoints/prompt/sr_prompt_embeddings.pt"
+
+seed: 42
+output_dir: "outputs/dmd-1k-video/distill-1K-video"

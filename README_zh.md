@@ -6,13 +6,14 @@
 
 <h1>Echo-SR</h1>
 
-<p><strong>面向 LTX-2 19B 与 LTX-2.3 22B 的一步 DMD 视频超分</strong></p>
+<p><strong>面向 LTX-2 19B 与 LTX-2.3 22B 的视频 / 音视频超分</strong></p>
 
 <p>
   <a href="README.md"><b>English</b></a> ·
   <a href="https://huggingface.co/xin1u/Echo-SR"><b>模型权重</b></a> ·
   <a href="#快速开始"><b>快速开始</b></a> ·
   <a href="#训练"><b>训练</b></a> ·
+  <a href="#长视频音视频超分"><b>音视频超分</b></a> ·
   <a href="#推理"><b>推理</b></a>
 </p>
 
@@ -21,37 +22,48 @@
   <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 或 3.12">
   <img src="https://img.shields.io/badge/PyTorch-2.7%2B-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch 2.7 或更高版本">
   <img src="https://img.shields.io/badge/Training-WebDataset-00A98F?style=flat-square" alt="WebDataset 训练">
-  <img src="https://img.shields.io/badge/Release-DMD--only-111111?style=flat-square" alt="仅发布 DMD">
+  <img src="https://img.shields.io/badge/Modalities-Video%20%2B%20Audio-111111?style=flat-square" alt="视频 + 音频">
   <a href="https://huggingface.co/xin1u/Echo-SR"><img src="https://img.shields.io/badge/Weights-Hugging%20Face-FFD21E?style=flat-square" alt="Hugging Face 权重"></a>
 </p>
 
 </div>
 
-Echo-SR 是面向 LTX 系列模型的**一步二阶段视频超分**研究代码。公开版本为
-19B 和 22B 提供统一的在线训练链路，组合冻结三步教师、DMD 分布匹配、GAN 监督和
-像素级重建损失。
+Echo-SR 是面向 LTX 系列模型的**二阶段超分**研究代码，包含两条共用仓库但**不共用代码路径**
+的产品线：
+
+- **短视频、纯视频 DMD** —— LTX-2 19B 与 LTX-2.3 22B 的一步生成器，由冻结三步教师经
+  DMD 分布匹配、GAN 监督与像素损失蒸馏得到。
+- **长视频音视频修复** —— LTX-2.3 22B 上的 736p → 1K / 2K 音视频联合增强，含多步教师与
+  一步学生，并支持任意长度片段的滑窗推理。
 
 > [!IMPORTANT]
-> 本仓库只公开 DMD 视频方案。两份配置都必须设置 `dmd.enabled: true`；音频参数不参与
-> 训练，当前推理入口也不会生成音轨。
+> 两条产品线 vendor 了**不同的 LTX 快照**，但它们导出同名 Python 模块。
+> `packages/ltx-core` + `packages/ltx-trainer` 服务短视频 DMD；
+> `packages/ltx-core-1.1` + `packages/ltx-trainer-1.1` 服务音视频。
+> 切勿把两者放进同一个 `PYTHONPATH` —— 一律通过 `scripts/*.sh` 启动。
 
 ## 核心特点
 
 - ⚡ **一步生成器**：将冻结三步教师蒸馏为单次二阶段去噪。
 - 🧠 **DMD + GAN 训练**：联合分布匹配、对抗监督、L1 与 LPIPS 损失。
+- 🔊 **音视频联合修复**：LQ 视频*与*音频 latent 共同条件化同一个 Transformer，输出自带匹配音轨。
+- 🎞️ **长视频推理**：121 帧滑窗按 rank 分卡，配合 drop 首帧 i2v 串联，窗口接缝不漂移。
 - 📦 **统一 WebDataset**：19B 和 22B 在线读取同一种 tar shard，不依赖离线 pair 数据集。
 - 🧩 **四路 LoRA**：teacher、student、real-score 和 fake-score 共享同一个冻结 Transformer。
 - 🖥️ **FSDP 启动链路**：提供可复现的单机与多机分布式训练入口。
 
 ## 已发布方案
 
-| 方案 | 基座 | 训练数据 | 学生模型 | 启动脚本 |
+| 方案 | 基座 | 模态 | 步数 | 启动脚本 |
 | --- | --- | --- | --- | --- |
-| **LTX-2 19B DMD** | LTX-2 19B dev | WebDataset 视频 shard | 一步 LoRA | `scripts/train_dmd_19b.sh` |
-| **LTX-2.3 22B DMD** | LTX-2.3 22B dev | WebDataset 视频 shard | 一步 LoRA | `scripts/train_dmd_22b.sh` |
+| **LTX-2 19B DMD** | LTX-2 19B dev | 视频 | 1 | `scripts/train_dmd_19b.sh` |
+| **LTX-2.3 22B DMD** | LTX-2.3 22B dev | 视频 | 1 | `scripts/train_dmd_22b.sh` |
+| **AV-SR 736p→1K** | LTX-2.3 22B dev | 音频 + 视频 | 多步 | `scripts/train_av_sr_1k.sh` |
+| **AV-SR 736p→2K** | LTX-2.3 22B dev | 音频 + 视频 | 多步 | `scripts/train_av_sr_2k.sh` |
+| **AV-SR 1K 蒸馏** | LTX-2.3 22B dev | 音视频 / 纯视频 | 1 | `scripts/train_av_distill_1k.sh` |
 
-两个方案使用相同的 trainer 和数据协议，但基座、官方蒸馏 LoRA 与空间上采样器必须按
-模型家族分别配置，不能交叉混用。
+两个 DMD 方案共用一套 trainer 和数据协议；三个 AV 方案共用另一套 trainer 与 1.1 快照。
+基座、官方蒸馏 LoRA 与空间上采样器必须按模型家族分别配置，不能交叉混用。
 
 ## 训练流程
 
@@ -80,18 +92,33 @@ flowchart LR
 
 ```text
 configs/
-├── accelerate/fsdp_8gpu.yaml          单节点 FSDP 配置
+├── accelerate/fsdp_8gpu.yaml          单节点 FSDP 配置（DMD）
+├── accelerate/fsdp_av.yaml            单节点 FSDP 配置（音视频）
 ├── echo_sr_ltx2_19b_dmd.yaml          19B WebDataset DMD 配置
-└── echo_sr_ltx23_22b_dmd.yaml         22B WebDataset DMD 配置
+├── echo_sr_ltx23_22b_dmd.yaml         22B WebDataset DMD 配置
+├── av_sr_1k_multistep.yaml            736p→1K 音视频，多步教师
+├── av_sr_2k_multistep.yaml            736p→2K 音视频，多步
+├── av_sr_1k_distill.yaml              一步蒸馏，音频 + 视频
+└── av_sr_1k_distill_video.yaml        一步蒸馏，纯视频（对应已发布权重）
+docs/av_sr_training.md                 音视频方案：数据契约与超参
 packages/
-├── ltx-core/                           兼容的 LTX core 源码
-├── ltx-pipelines/                      兼容的 LTX pipelines 源码
-├── ltx-trainer/                        通用 LTX 训练工具
-└── ltx-sr-trainer/                     Echo-SR 数据、DMD 与推理代码
+├── ltx-core/                           LTX core 快照 —— DMD 路径
+├── ltx-pipelines/                      LTX pipelines 快照 —— DMD 路径
+├── ltx-trainer/                        LTX 训练工具 —— DMD 路径
+├── ltx-sr-trainer/                     Echo-SR DMD 数据、训练与推理
+├── ltx-core-1.1/                       LTX core 快照 —— 音视频路径
+├── ltx-trainer-1.1/                    LTX 训练工具 —— 音视频路径
+├── ltx-av-sr-trainer/                  音视频多步训练 + 长视频推理
+└── echo-av-distill/                    音视频一步蒸馏
 scripts/
 ├── train_dmd_19b.sh                    19B 分布式启动入口
 ├── train_dmd_22b.sh                    22B 分布式启动入口
-└── infer.sh                             单视频推理入口
+├── infer.sh                            单视频 DMD 推理入口
+├── train_av_sr_1k.sh                   736p→1K 音视频启动入口
+├── train_av_sr_2k.sh                   736p→2K 音视频启动入口
+├── train_av_distill_1k.sh              一步蒸馏启动入口
+├── infer_av_sr_long.sh                 多步长视频推理
+└── infer_av_distill_long.sh            一步长视频推理
 tools/build_train_index.py              WebDataset shard 索引生成工具
 ```
 
@@ -127,6 +154,18 @@ python -m pip install -e packages/ltx-core \
   -e 'packages/ltx-sr-trainer[tracking]'
 ```
 
+> 音视频那两个包需要**独立的**环境，因为 `packages/ltx-core-1.1` 和
+> `packages/ltx-core` 都提供 `ltx_core` 模块：
+>
+> ```bash
+> python -m pip install -e 'packages/ltx-av-sr-trainer[tracking,perceptual]' \
+>   -e 'packages/echo-av-distill[tracking,perceptual]'
+> ```
+>
+> 1.1 的 core 与 trainer 完全不走 pip —— 启动脚本会把
+> `packages/ltx-core-1.1/src` 和 `packages/ltx-trainer-1.1/src` 前置到
+> `PYTHONPATH`。
+
 ### 2. 下载权重
 
 Echo-SR 生成器权重发布在
@@ -140,6 +179,13 @@ hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 | --- | --- |
 | LTX-2 19B | `echo-sr-ltx2-19b-dmd-step18300.safetensors` |
 | LTX-2.3 22B | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` |
+| LTX-2.3 22B 音视频多步教师 | `av-sr-1k-multistep-step09900.safetensors` |
+| LTX-2.3 22B 纯视频一步学生 | `av-sr-1k-distill-video-step005100.safetensors` |
+
+后两个是一对：一步学生正是由它上面那个多步教师蒸馏而来。同时还发布了两个音视频配置
+必须的辅助资产 —— `tinydecoder/taeltx2_3_wide.pth`（验证阶段用的快速 latent 预览
+解码器）和 `prompt/sr_prompt_embeddings.pt`（预计算 prompt embedding，使一步路径完全
+不加载文本编码器）。
 
 基座权重按下面的结构放置：
 
@@ -225,6 +271,108 @@ export SWANLAB_API_KEY='...'
 
 输出包括解析后的 `run_config.yaml`、标量日志、验证对比，以及
 `<output_dir>/checkpoints/` 下的生成器权重。
+
+## 长视频音视频超分
+
+音视频这条线把 736p 输入修复到 1K 或 2K，同时联合增强音轨，并可作用于任意长度的片段。
+它与上面的 DMD 方案是**完全不同的代码路径** —— 不同的 trainer、不同的 vendor 快照、
+不同的启动脚本。
+
+### 条件注入方式
+
+低质视频和音频经 VAE 编码后作为 **latent 条件**，在通道维上与带噪输入拼接，由扩展后的
+`patchify_proj` / `audio_patchify_proj` 吸收。训练时会给这些条件加上从
+`[condition_noise_min, condition_noise_max]` 采样的噪声，避免模型过拟合到单一退化强度。
+
+视频和音频共享同一个 48 层 Transformer，每层都有跨模态注意力，但**第 0–23 层之间梯度被
+切断**（`cross_attn_grad_isolation_layer: 24`），第 24–47 层梯度自由流动。这样浅层各自
+学模态专属特征、互不干扰，深层才学真正的联合表征。
+
+所有 adapter 都是 rank-384 / alpha-384 的 LoRA，覆盖约 40 类模块，含音视频跨注意力的
+gate adaLN。
+
+2K 方案额外引入 `CondSRPatchifyProj`：一个把 40×23 的 LQ latent 网格映射到 80×46 HQ 网格
+的可学习空间投影。该模块**只存在于 1.1 快照**，这也是必须同时 vendor 1.1 的直接原因。
+
+### 滑窗长视频推理
+
+长片按镜头切分。每个镜头 241 帧，由两个 121 帧窗口覆盖：`[shot_start, shot_start+121]`
+和 `[shot_start+120, shot_start+241]`，即镜头内窗口重叠 1 帧、跨镜头不重叠。窗口按 rank
+分发，在 rank 0 汇总并在接缝处交叉淡化。
+
+### 跨窗连续性：drop 首帧 i2v
+
+Transformer 在窗口之间没有记忆，朴素滑窗会在每条接缝上出现色彩和身份漂移。一步路径
+（`packages/ltx-av-sr-trainer/scripts/infer_distill_v3_long.py`）的做法是把第一个窗口之后
+的每个窗口都变成一次**图生视频，然后把那个条件帧丢掉**：
+
+1. 去噪前，把上一窗口的**最后**一帧 latent 写进本窗口 `latent` 和 `clean_latent` 的前
+   `H×W` 个 token 槽位，并把这些 token 的 `denoise_mask` 置零。此刻问题变成 i2v：
+   第 0 帧已给定，其余帧需要续写出来。
+2. 每个 Euler 步之后，都用条件 latent 重新覆盖模型在这些 token 上的预测，防止一步或少步
+   solver 让锚点漂走。
+3. 去噪结束后，先保存本窗口自己的末帧 latent 供下一窗口使用，再用
+   `video_tools.clear_conditioning()` 在 unpatchify 和解码之前把条件 token **丢掉**。
+
+第 3 步正是"drop 首帧"而非普通 i2v 的原因：那个条件帧是上一窗口已经渲染过的帧的副本，
+输出它会造成卡顿。于是每个窗口实际贡献 `121 − 1 = 120` 帧新内容，拼接后连续。每个镜头的
+第一个窗口没有前驱，走普通 t2av；镜头之间**故意不串联**，以免把硬切平滑掉。
+
+训练侧的对应物是 `first_frame_conditioning_p`：以该概率把样本的首帧 token 替换为干净的
+HQ latent 并排除出损失，让模型在训练中就见到"给定首帧、续写后续"这一形式。
+`av_sr_1k_multistep.yaml` 和两个蒸馏配置取 `0.5`，`av_sr_2k_multistep.yaml` 取 `0.0`。
+
+多步推理脚本（`infer_sr_long.py`）**不做**这种串联 —— 它独立去噪每个窗口，只靠交叉淡化。
+drop 首帧串联正是一步模型在没有迭代精修去遮掩接缝的情况下仍能处理长输入的关键。
+
+### 训练
+
+```bash
+# 736p → 1K，多步教师
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_1k.sh
+
+# 736p → 2K，多步
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_2k.sh
+
+# 从上面的教师做一步蒸馏
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_distill_1k.sh
+
+# 纯视频分支 —— 已发布的一步权重出自这条
+CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
+```
+
+`NNODES` / `NODE_RANK` / `MASTER_ADDR` / `MASTER_PORT` / `NPROC_PER_NODE` 约定与 DMD 一致。
+加 `DRY_RUN=1` 可以只打印解析后的 `PYTHONPATH` 和入口而不真正启动。数据契约和逐方案超参
+见 [`docs/av_sr_training.md`](docs/av_sr_training.md)。
+
+### 一步模型不是 DMD 学生
+
+`distillation.enable_dmd` 决定目标函数，两个已发布的一步配置都把它设为 **`false`**：
+不计算分布匹配损失，critic 分支也从不更新。学生实际是在 LPIPS、Haar 小波、时序一致性和
+像素损失下回归教师轨迹。只有短视频的 `ltx-sr-trainer` 那套才是 DMD。
+
+把 `enable_dmd` 设为 `true` 会重新启用
+`packages/echo-av-distill/src/echo_sr/training/distiller.py` 里的 DMD2 路径，但该配置下
+没有发布权重。
+
+### 推理
+
+```bash
+# 多步，输出音频 + 视频
+NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-1k-multistep-step09900.safetensors \
+  --output-dir outputs/av_sr_long
+
+# 一步
+NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors \
+  --output-dir outputs/av_distill_long
+```
+
+`--prompt-file` 传一个包含逐镜头 `Summary` 字段的 JSON 可以分镜头引导，`--prompt` 则是
+全局兜底。一步路径从 `AV_SR_PROMPT_CACHE` 读 prompt embedding，不加载 Gemma。
 
 ## 推理
 

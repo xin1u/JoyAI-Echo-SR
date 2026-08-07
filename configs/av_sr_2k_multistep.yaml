@@ -1,0 +1,154 @@
+# =============================================================================
+# Echo-SR — 736p -> 2K audio-video restoration, MULTI-STEP
+# =============================================================================
+# Recipe:  bash scripts/train_av_sr_2k.sh
+# Entry:   packages/ltx-av-sr-trainer/scripts/train_online.py
+# Vendor:  LTX-2 1.1  (packages/ltx-core-1.1, packages/ltx-trainer-1.1)
+#
+# Exact 2x upscale (1280x736 -> 2560x1472) using CondSRPatchifyProj, which maps
+# the LQ latent grid (40x23) onto the HQ latent grid (80x46) through a learned
+# spatial projection. That module only exists in the 1.1 vendor snapshot.
+#
+# No weights are released for this recipe.
+# =============================================================================
+
+# Model
+model:
+  model_path: "checkpoints/ltx-2.3-22b-dev.safetensors"
+  text_encoder_path: "checkpoints/gemma-3-12b"
+  training_mode: "lora"
+  lora_structure_from: "checkpoints/ltx-2.3-22b-distilled-lora-384-1.1.safetensors"
+  load_checkpoint: null
+
+# LoRA - matching the official LTX-2.3 distilled LoRA (rank=384, alpha=384)
+lora:
+  rank: 384
+  alpha: 384
+  dropout: 0.0
+  target_modules:
+    - "to_k"
+    - "to_q"
+    - "to_v"
+    - "to_out.0"
+    - "to_gate_logits"
+    - "ff.net.0.proj"
+    - "ff.net.2"
+    - "patchify_proj"
+    - "audio_patchify_proj"
+    - "proj_out"
+    - "audio_proj_out"
+    - "adaln_single.linear"
+    - "adaln_single.emb.timestep_embedder.linear_1"
+    - "adaln_single.emb.timestep_embedder.linear_2"
+    - "audio_ff.net.0.proj"
+    - "audio_ff.net.2"
+    - "audio_adaln_single.linear"
+    - "audio_adaln_single.emb.timestep_embedder.linear_1"
+    - "audio_adaln_single.emb.timestep_embedder.linear_2"
+    - "audio_prompt_adaln_single.linear"
+    - "audio_prompt_adaln_single.emb.timestep_embedder.linear_1"
+    - "audio_prompt_adaln_single.emb.timestep_embedder.linear_2"
+    - "prompt_adaln_single.linear"
+    - "prompt_adaln_single.emb.timestep_embedder.linear_1"
+    - "prompt_adaln_single.emb.timestep_embedder.linear_2"
+    - "av_ca_a2v_gate_adaln_single.linear"
+    - "av_ca_a2v_gate_adaln_single.emb.timestep_embedder.linear_1"
+    - "av_ca_a2v_gate_adaln_single.emb.timestep_embedder.linear_2"
+    - "av_ca_v2a_gate_adaln_single.linear"
+    - "av_ca_v2a_gate_adaln_single.emb.timestep_embedder.linear_1"
+    - "av_ca_v2a_gate_adaln_single.emb.timestep_embedder.linear_2"
+    - "av_ca_audio_scale_shift_adaln_single.linear"
+    - "av_ca_audio_scale_shift_adaln_single.emb.timestep_embedder.linear_1"
+    - "av_ca_audio_scale_shift_adaln_single.emb.timestep_embedder.linear_2"
+    - "av_ca_video_scale_shift_adaln_single.linear"
+    - "av_ca_video_scale_shift_adaln_single.emb.timestep_embedder.linear_1"
+    - "av_ca_video_scale_shift_adaln_single.emb.timestep_embedder.linear_2"
+
+# Training Strategy
+training_strategy:
+  name: "av_restoration"
+  with_audio: true
+  lq_drop_prob: 0.1
+  condition_noise_min: 0.0
+  condition_noise_max: 0.1
+  audio_loss_weight: 10.0
+  first_frame_conditioning_p: 0.0
+  num_val_samples: 1
+
+# Optimization
+optimization:
+  learning_rate: 5e-5
+  steps: 2000000
+  batch_size: 1
+  gradient_accumulation_steps: 1
+  max_grad_norm: 0.5
+  optimizer_type: "adamw"
+  scheduler_type: "cosine"
+  scheduler_params:
+    warmup_steps: 1
+  enable_gradient_checkpointing: true
+
+# Acceleration
+acceleration:
+  mixed_precision_mode: "bf16"
+  quantization: null
+  load_text_encoder_in_8bit: false
+  offload_optimizer_during_validation: true
+
+# Data — JoyT2AV_HR_flat (876k samples, 1080p~4K, 5-17s each)
+data:
+  preprocessed_data_root: "data/av_train"
+  hq_resolution: [2560, 1472, 121]  # [W, H, F] — 2K target (LQ × 2)
+  lq_resolution: [1280, 736, 121]   # [W, H, F] — base model output (condition)
+  num_dataloader_workers: 0
+
+# Validation
+validation:
+  prompts:
+    - "A classic movie scene with detailed cinematography and rich audio"
+  negative_prompt: "blurry, out of focus, overexposed, underexposed, low contrast, washed out colors, excessive noise, grainy texture, poor lighting, flickering, motion blur, distorted proportions, unnatural skin tones, deformed facial features, asymmetrical face, missing facial features, extra limbs, disfigured hands, wrong hand count, artifacts around text, inconsistent perspective, camera shake, incorrect depth of field, background too sharp, background clutter, distracting reflections, harsh shadows, inconsistent lighting direction, color banding, cartoonish rendering, 3D CGI look, unrealistic materials, uncanny valley effect, incorrect ethnicity, wrong gender, exaggerated expressions, wrong gaze direction, mismatched lip sync, silent or muted audio, distorted voice, robotic voice, echo, background noise, off-sync audio, incorrect dialogue, added dialogue, repetitive speech, jittery movement, awkward pauses, incorrect timing, unnatural transitions, inconsistent framing, tilted camera, flat lighting, inconsistent tone, cinematic oversaturation, stylized filters, or AI artifacts."
+  images: null
+  video_dims: [2560, 1472, 121]
+  frame_rate: 25.0
+  seed: 42
+  inference_steps: 15
+  interval: 200
+  guidance_scale: 3.0
+  stg_scale: 1.0
+  stg_blocks: [29]
+  stg_mode: "stg_av"
+  generate_audio: true
+  skip_initial_validation: true
+
+# Checkpoints
+checkpoints:
+  interval: 200
+  keep_last_n: 10
+  precision: "bfloat16"
+
+# Flow Matching
+flow_matching:
+  timestep_sampling_mode: "shifted_logit_normal"
+  timestep_sampling_params: {}
+
+# Hugging Face Hub
+hub:
+  push_to_hub: false
+  hub_model_id: null
+
+# SwanLab
+swanlab:
+  enabled: false  # set true and export SWANLAB_API_KEY to enable tracking
+  project: "LTX23_AV_Restoration"
+  experiment_name: null
+  mode: "online"
+  tags: ["ltx2.3", "lora", "av-restoration", "joyt2av-hr", "2k"]
+
+# Logging
+logging:
+  log_interval: 1
+  log_file: true
+
+# General
+seed: 42
+output_dir: "outputs/tav2av_sr_v2_2k/ltx23_av_restoration_lora384_joyt2av_2k"

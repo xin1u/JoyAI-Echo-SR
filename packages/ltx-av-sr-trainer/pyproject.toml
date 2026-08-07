@@ -1,0 +1,40 @@
+[project]
+name = "ltx-av-sr-trainer"
+version = "0.1.0"
+description = "Echo-SR long-video audio-video super-resolution / restoration trainer for LTX-2.3"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "accelerate>=1.2.1",
+    "av>=14.2.1",
+    "einops",
+    "imageio>=2.37.0",
+    "imageio-ffmpeg>=0.6.0",
+    "opencv-python>=4.11.0.86",
+    "peft>=0.14.0",
+    "pydantic>=2.10.4",
+    "pyyaml>=6.0",
+    "rich>=13.9.4",
+    "safetensors>=0.5.0",
+    "torch>=2.7.0",
+    "torchaudio>=2.7.0",
+    "torchvision>=0.21.0",
+]
+
+[project.optional-dependencies]
+tracking = ["swanlab"]
+perceptual = ["lpips"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ltx_av_sr_trainer"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
