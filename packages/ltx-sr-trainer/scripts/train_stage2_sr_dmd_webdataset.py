@@ -5,7 +5,9 @@ teacher, a trainable one-step student/generator, a frozen real score, and a
 trainable fake score. The objective combines online trajectory distillation,
 DMD distribution matching, optional GAN classification, and pixel losses.
 
-This public entry is video-only and requires ``dmd.enabled: true``.
+This public entry trains the video branch (the audio LoRA stays frozen at its
+official distilled-LoRA values, so the saved checkpoints remain audio-video
+capable) and requires ``dmd.enabled: true``.
 """
 
 from __future__ import annotations
@@ -841,7 +843,9 @@ def attach_all_loras(
     student_lora.requires_grad_(True)   # 学生/generator: trainable
     fake_lora.requires_grad_(True)      # fake score/critic: trainable
 
-    # Freeze audio LoRA parameters; this release trains the video branch only.
+    # Freeze audio LoRA parameters: the DMD losses here supervise video, so the
+    # audio branch keeps its official distilled-LoRA weights and the saved
+    # checkpoint stays audio-video capable.
     for name, param in student_lora.named_lora_parameters():
         if "audio" in name:
             param.requires_grad_(False)

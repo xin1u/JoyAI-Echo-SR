@@ -1,7 +1,7 @@
 # Audio-Video Super-Resolution: Training Guide
 
 This document covers the three long-video audio-video recipes. For the
-short-video, video-only DMD recipes see the main [README](../README.md).
+short-video DMD recipes see the main [README](../README.md).
 
 > [!IMPORTANT]
 > These recipes use the **1.1 vendored LTX snapshot**

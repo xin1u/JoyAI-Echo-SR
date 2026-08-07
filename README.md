@@ -6,7 +6,7 @@
 
 <h1>JoyAI-Echo-SR</h1>
 
-<p><strong>Video and audio-video super-resolution for LTX-2 19B and LTX-2.3 22B</strong></p>
+<p><strong>Audio-video super-resolution for LTX-2 19B and LTX-2.3 22B</strong></p>
 
 <p>
   <a href="README_zh.md"><b>中文</b></a> ·
@@ -34,9 +34,11 @@ JoyAI-Echo-SR is the super-resolution sub-project of
 for **stage-2 super-resolution** on the LTX model family. It covers two product
 lines that share a repository but not a code path:
 
-- **Short-video, video-only DMD** — one-step generators for LTX-2 19B and
+- **Short-video DMD** — one-step audio-video generators for LTX-2 19B and
   LTX-2.3 22B, distilled from frozen three-step teachers with DMD distribution
-  matching, GAN supervision, and pixel losses.
+  matching, GAN supervision, and pixel losses. The DMD losses sharpen the video
+  branch; the checkpoints carry the full audio branch (inherited from the
+  official distilled LoRA) and support joint audio-video 1-step SR.
 - **Long-video, audio-video restoration** — 736p → 1K / 2K joint audio-video
   enhancement on LTX-2.3 22B, with a multi-step teacher and a 1-step student,
   and sliding-window inference over arbitrarily long clips.
@@ -76,8 +78,8 @@ lines that share a repository but not a code path:
 
 | Recipe | Base model | Modality | Steps | Launcher |
 | --- | --- | --- | --- | --- |
-| **LTX-2 19B DMD** | LTX-2 19B dev | video | 1 | `scripts/train_dmd_19b.sh` |
-| **LTX-2.3 22B DMD** | LTX-2.3 22B dev | video | 1 | `scripts/train_dmd_22b.sh` |
+| **LTX-2 19B DMD** | LTX-2 19B dev | audio + video | 1 | `scripts/train_dmd_19b.sh` |
+| **LTX-2.3 22B DMD** | LTX-2.3 22B dev | audio + video | 1 | `scripts/train_dmd_22b.sh` |
 | **AV-SR 736p→1K** | LTX-2.3 22B dev | audio + video | multi | `scripts/train_av_sr_1k.sh` |
 | **AV-SR 736p→2K** | LTX-2.3 22B dev | audio + video | multi | `scripts/train_av_sr_2k.sh` |
 | **AV-SR 1K distill** | LTX-2.3 22B dev | audio + video | 1 | `scripts/train_av_distill_1k.sh` |

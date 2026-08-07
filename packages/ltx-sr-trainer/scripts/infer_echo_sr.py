@@ -3,7 +3,10 @@
 Input LQ video -> VAE encode -> spatial latent upsampler -> 3-step teacher and/or
 1-step distilled student Refiner -> decoded MP4.
 
-This is intentionally video-only and defaults to the x2 training resolution.
+This entry decodes the video stream and defaults to the x2 training resolution.
+The released DMD checkpoints carry the full audio branch (inherited from the
+official distilled LoRA), so they remain audio-video capable — for joint
+audio-video output use the long-video launchers (`scripts/infer_av_*.sh`).
 Modified for the portable Echo-SR release in 2026.
 """
 
@@ -508,7 +511,7 @@ def main() -> None:
     cleanup_cuda()
     cuda_mem("after_prompt_encode", device)
 
-    # Stage C: video-only Refiner through the official DiffusionStage LoRA loader/fuser.
+    # Stage C: video-branch Refiner through the official DiffusionStage LoRA loader/fuser.
     if not args.teacher_lora_path and not args.student_lora_path:
         raise ValueError("At least one of --teacher-lora-path or --student-lora-path must be non-empty.")
 

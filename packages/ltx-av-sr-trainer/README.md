@@ -4,7 +4,7 @@ Long-video **audio-video** super-resolution / restoration training and inference
 LTX-2.3 22B. This is the multi-step teacher branch of Echo-SR; the 1-step distilled
 student lives in [`../echo-av-distill`](../echo-av-distill).
 
-Unlike the short-video `ltx-sr-trainer` package (DMD, video-only, LTX-2 1.0 snapshot),
+Unlike the short-video `ltx-sr-trainer` package (DMD, LTX-2 1.0 snapshot),
 everything here targets the **LTX-2 1.1 snapshot** vendored as
 `packages/ltx-core-1.1` and `packages/ltx-trainer-1.1`. The two snapshots share Python
 top-level module names (`ltx_core`, `ltx_trainer`) and therefore **cannot be imported in

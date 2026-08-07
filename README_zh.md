@@ -6,7 +6,7 @@
 
 <h1>JoyAI-Echo-SR</h1>
 
-<p><strong>面向 LTX-2 19B 与 LTX-2.3 22B 的视频 / 音视频超分</strong></p>
+<p><strong>面向 LTX-2 19B 与 LTX-2.3 22B 的音视频超分</strong></p>
 
 <p>
   <a href="README.md"><b>English</b></a> ·
@@ -33,7 +33,7 @@ JoyAI-Echo-SR 是 [JoyAI-Echo](https://github.com/jd-opensource/JoyAI-Echo) 的�
 面向 LTX 系列模型的**二阶段超分**研究代码，包含两条共用仓库但**不共用代码路径**
 的产品线：
 
-- **短视频、纯视频 DMD** —— LTX-2 19B 与 LTX-2.3 22B 的一步生成器，由冻结三步教师经
+- **短视频 DMD** —— LTX-2 19B 与 LTX-2.3 22B 的一步音视频生成器，由冻结三步教师经
   DMD 分布匹配、GAN 监督与像素损失蒸馏得到。
 - **长视频音视频修复** —— LTX-2.3 22B 上的 736p → 1K / 2K 音视频联合增强，含多步教师与
   一步学生，并支持任意长度片段的滑窗推理。
@@ -72,8 +72,8 @@ JoyAI-Echo-SR 是 [JoyAI-Echo](https://github.com/jd-opensource/JoyAI-Echo) 的�
 
 | 方案 | 基座 | 模态 | 步数 | 启动脚本 |
 | --- | --- | --- | --- | --- |
-| **LTX-2 19B DMD** | LTX-2 19B dev | 视频 | 1 | `scripts/train_dmd_19b.sh` |
-| **LTX-2.3 22B DMD** | LTX-2.3 22B dev | 视频 | 1 | `scripts/train_dmd_22b.sh` |
+| **LTX-2 19B DMD** | LTX-2 19B dev | 音频 + 视频 | 1 | `scripts/train_dmd_19b.sh` |
+| **LTX-2.3 22B DMD** | LTX-2.3 22B dev | 音频 + 视频 | 1 | `scripts/train_dmd_22b.sh` |
 | **AV-SR 736p→1K** | LTX-2.3 22B dev | 音频 + 视频 | 多步 | `scripts/train_av_sr_1k.sh` |
 | **AV-SR 736p→2K** | LTX-2.3 22B dev | 音频 + 视频 | 多步 | `scripts/train_av_sr_2k.sh` |
 | **AV-SR 1K 蒸馏** | LTX-2.3 22B dev | 音频 + 视频 | 1 | `scripts/train_av_distill_1k.sh` |

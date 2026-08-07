@@ -14,7 +14,7 @@ different points for different product lines:
 
 | Directories | Serves | Notable contents |
 | --- | --- | --- |
-| `packages/ltx-core`, `packages/ltx-pipelines`, `packages/ltx-trainer` | short-video, video-only DMD recipes | `fused_kernels/`, `layer_streaming.py` |
+| `packages/ltx-core`, `packages/ltx-pipelines`, `packages/ltx-trainer` | short-video DMD recipes | `fused_kernels/`, `layer_streaming.py` |
 | `packages/ltx-core-1.1`, `packages/ltx-trainer-1.1` | long-video audio-video recipes | `block_streaming/`, `hdr.py`, `cond_sr_patchify.py`, `reference_audio_cond.py`, `memory_efficient_decode.py`, `sigma_tracker.py` |
 
 Both snapshots export the same top-level Python module names (`ltx_core`,

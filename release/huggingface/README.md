@@ -21,8 +21,10 @@ super-resolution adapters for the LTX model family, covering
 two product lines. Training and inference code is available in the
 [JoyAI-Echo-SR GitHub repository](https://github.com/xin1u/JoyAI-Echo-SR).
 
-- **Short-video, video-only DMD** — one-step generators for LTX-2 19B and
-  LTX-2.3 22B, distilled with DMD distribution matching + GAN + pixel losses.
+- **Short-video DMD** — one-step audio-video generators for LTX-2 19B and
+  LTX-2.3 22B, distilled with DMD distribution matching + GAN + pixel losses
+  on the video branch; the full audio branch is carried in the checkpoints,
+  which support joint audio-video 1-step SR.
 - **Long-video audio-video SR** — 736p → 1K joint audio-video enhancement on
   LTX-2.3 22B: a multi-step teacher and a 1-step student, with sliding-window
   inference over arbitrarily long clips.
