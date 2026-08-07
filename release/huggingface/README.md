@@ -33,6 +33,7 @@ two product lines. Training and inference code is available in the
 | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` | DMD | LTX-2.3 22B | 4,600 | BF16 LoRA |
 | `av-sr-1k-multistep-step09900.safetensors` | AV SR | LTX-2.3 22B | 9,900 | BF16 LoRA |
 | `av-sr-1k-distill-video-step005100.safetensors` | AV SR | LTX-2.3 22B | 5,100 | BF16 LoRA |
+| `av-sr-2k-multistep-step08000.safetensors` | AV SR | LTX-2.3 22B | 8,000 | BF16 LoRA |
 
 The two AV files form a teacher→student pair: the 1-step
 `av-sr-1k-distill-video` model was distilled from the multi-step
@@ -45,6 +46,11 @@ audio-video phase and is carried in full (the file is structurally identical
 to the teacher — 3,330 tensors, 2,136 of them audio-branch). The 1-step
 inference path denoises audio latents in the same single step as video and
 muxes the enhanced track into the output.
+
+`av-sr-2k-multistep-step08000.safetensors` is an independent multi-step model
+for exact 2× upscaling (1280×736 → 2560×1472). It maps the LQ latent grid onto
+the HQ grid with a learned `CondSRPatchifyProj` spatial projection and also
+restores audio and video jointly.
 
 Two auxiliary assets required by the AV configs ship alongside the weights:
 
@@ -92,6 +98,12 @@ NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
 NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
   --input input_736p.mp4 \
   --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors
+
+# multi-step 2K (exact 2×: 1280×736 → 2560×1472)
+NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-2k-multistep-step08000.safetensors \
+  --hq-width 2560 --hq-height 1472
 ```
 
 See `docs/av_sr_training.md` in the GitHub repository for training recipes and

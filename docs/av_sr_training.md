@@ -157,6 +157,16 @@ The 2K recipe also raises `audio_loss_weight` to `10.0`, drops `batch_size` to
 `1`, and sets `offload_optimizer_during_validation: true`, without which
 validation at 2560×1472 will not fit.
 
+The released 2K checkpoint is `av-sr-2k-multistep-step08000.safetensors`. Run
+it through the multi-step inference launcher with the matching output grid:
+
+```bash
+NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-2k-multistep-step08000.safetensors \
+  --hq-width 2560 --hq-height 1472
+```
+
 ## Distillation: not DMD by default
 
 `distillation.enable_dmd` selects the objective, and **both released
@@ -215,14 +225,18 @@ LTX-2.3 22B dev  +  distilled-lora-384-1.1 (structure only)
         ├── av_sr_1k_multistep.yaml   ──►  av-sr-1k-multistep-step09900.safetensors
         │                                           │  (teacher_checkpoint)
         │                                           ▼
-        └── av_sr_1k_distill_video.yaml ─►  av-sr-1k-distill-video-step005100.safetensors
+        ├── av_sr_1k_distill_video.yaml ─►  av-sr-1k-distill-video-step005100.safetensors
+        │
+        └── av_sr_2k_multistep.yaml   ──►  av-sr-2k-multistep-step08000.safetensors
 ```
 
-Both are published on [Hugging Face](https://huggingface.co/xin1u/Echo-SR)
+All three are published on [Hugging Face](https://huggingface.co/xin1u/Echo-SR)
 together with `tinydecoder/taeltx2_3_wide.pth` and
-`prompt/sr_prompt_embeddings.pt`. Set `model.load_checkpoint` to resume from a
-checkpoint; it is `null` in the published configs so a fresh run starts from the
-base model.
+`prompt/sr_prompt_embeddings.pt`. The 2K checkpoint is independent of the 1K
+pair; its `CondSRPatchifyProj` is sized for the 80×46 HQ latent grid, so run it
+with `--hq-width 2560 --hq-height 1472`. Set `model.load_checkpoint` to resume
+from a checkpoint; it is `null` in the published configs so a fresh run starts
+from the base model.
 
 ## Distributed setup
 

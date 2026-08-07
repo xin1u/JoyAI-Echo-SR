@@ -9,7 +9,9 @@
 # the LQ latent grid (40x23) onto the HQ latent grid (80x46) through a learned
 # spatial projection. That module only exists in the 1.1 vendor snapshot.
 #
-# No weights are released for this recipe.
+# This config corresponds to the released checkpoint
+# `av-sr-2k-multistep-step08000.safetensors`. At inference pass
+# `--hq-width 2560 --hq-height 1472` to infer_av_sr_long.sh.
 # =============================================================================
 
 # Model

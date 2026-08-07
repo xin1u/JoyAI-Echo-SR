@@ -775,6 +775,10 @@ def parse_args():
     p.add_argument("--output-dir", default="outputs/sr_long_inference")
     p.add_argument("--steps", type=int, default=INFERENCE_STEPS)
     p.add_argument("--guidance-scale", type=float, default=GUIDANCE_SCALE)
+    p.add_argument("--hq-width", type=int, default=HQ_W,
+                   help="Output width — 1920 for the 1K checkpoint, 2560 for the 2K checkpoint")
+    p.add_argument("--hq-height", type=int, default=HQ_H,
+                   help="Output height — 1152 for the 1K checkpoint, 1472 for the 2K checkpoint")
     p.add_argument("--seed", type=int, default=SEED)
     return p.parse_args()
 
@@ -782,6 +786,7 @@ def parse_args():
 def main():
     global MODEL_PATH, TEXT_ENCODER_PATH, CHECKPOINT_PATH, INPUT_VIDEO, PROMPT_FILE
     global OUTPUT_DIR, INFERENCE_STEPS, GUIDANCE_SCALE, SEED, DEFAULT_PROMPT
+    global HQ_W, HQ_H
 
     args = parse_args()
     MODEL_PATH = args.model_path
@@ -793,6 +798,8 @@ def main():
     OUTPUT_DIR = Path(args.output_dir)
     INFERENCE_STEPS = args.steps
     GUIDANCE_SCALE = args.guidance_scale
+    HQ_W = args.hq_width  # must match the checkpoint's CondSRPatchifyProj grid
+    HQ_H = args.hq_height
     SEED = args.seed
 
     # Distributed setup

@@ -188,12 +188,15 @@ hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 | LTX-2.3 22B | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` |
 | LTX-2.3 22B audio-video, multi-step teacher | `av-sr-1k-multistep-step09900.safetensors` |
 | LTX-2.3 22B audio-video, 1-step student | `av-sr-1k-distill-video-step005100.safetensors` |
+| LTX-2.3 22B audio-video 2K, multi-step | `av-sr-2k-multistep-step08000.safetensors` |
 
-The last two form a pair: the 1-step student was distilled from the multi-step
-teacher above it, and **both restore audio and video jointly**. The `-video` in
-the student's filename refers to the losses of its final distillation phase,
-not to its capability — see
-[The 1-step student is audio-video capable](#the-1-step-student-is-audio-video-capable). Two auxiliary assets are published alongside them and are
+The 1K multi-step and 1-step files form a pair: the 1-step student was
+distilled from the multi-step teacher above it, and **both restore audio and
+video jointly**. The `-video` in the student's filename refers to the losses of
+its final distillation phase, not to its capability — see
+[The 1-step student is audio-video capable](#the-1-step-student-is-audio-video-capable).
+The 2K checkpoint is an independent multi-step model for exact 2× upscaling
+(1280×736 → 2560×1472) built on `CondSRPatchifyProj`. Two auxiliary assets are published alongside them and are
 required by the audio-video configs — `tinydecoder/taeltx2_3_wide.pth` (fast
 latent preview decoder used during validation) and
 `prompt/sr_prompt_embeddings.pt` (precomputed prompt embeddings, so the 1-step
@@ -438,6 +441,17 @@ NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
 Pass `--prompt-file` a JSON of per-shot `Summary` strings to steer each shot, or
 `--prompt` for a single fallback used everywhere. The 1-step path reads prompt
 embeddings from `AV_SR_PROMPT_CACHE` instead of loading Gemma.
+
+For the 2K checkpoint, the output grid must match its `CondSRPatchifyProj`:
+
+```bash
+# multi-step 2K (exact 2×: 1280×736 → 2560×1472)
+NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-2k-multistep-step08000.safetensors \
+  --hq-width 2560 --hq-height 1472 \
+  --output-dir outputs/av_sr_2k_long
+```
 
 ## Inference
 

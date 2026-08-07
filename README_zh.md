@@ -181,10 +181,12 @@ hf download xin1u/Echo-SR --local-dir checkpoints/echo-sr
 | LTX-2.3 22B | `echo-sr-ltx2.3-22b-dmd-step04600.safetensors` |
 | LTX-2.3 22B 音视频多步教师 | `av-sr-1k-multistep-step09900.safetensors` |
 | LTX-2.3 22B 音视频一步学生 | `av-sr-1k-distill-video-step005100.safetensors` |
+| LTX-2.3 22B 音视频 2K 多步 | `av-sr-2k-multistep-step08000.safetensors` |
 
-后两个是一对：一步学生正是由它上面那个多步教师蒸馏而来，**两者都做音视频联合修复**。
+1K 多步与一步是一对：一步学生正是由它上面那个多步教师蒸馏而来，**两者都做音视频联合修复**。
 一步权重文件名里的 `-video` 指的是其最后一段蒸馏采用视频侧重损失，而不是它只能出视频
-——见[一步学生支持音视频推理](#一步学生支持音视频推理)。同时还发布了两个音视频配置
+——见[一步学生支持音视频推理](#一步学生支持音视频推理)。2K 权重是独立的多步模型，
+基于 `CondSRPatchifyProj` 做精确 2 倍放大（1280×736 → 2560×1472）。同时还发布了两个音视频配置
 必须的辅助资产 —— `tinydecoder/taeltx2_3_wide.pth`（验证阶段用的快速 latent 预览
 解码器）和 `prompt/sr_prompt_embeddings.pt`（预计算 prompt embedding，使一步路径完全
 不加载文本编码器）。
@@ -392,6 +394,17 @@ NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
 
 `--prompt-file` 传一个包含逐镜头 `Summary` 字段的 JSON 可以分镜头引导，`--prompt` 则是
 全局兜底。一步路径从 `AV_SR_PROMPT_CACHE` 读 prompt embedding，不加载 Gemma。
+
+跑 2K 权重时，输出网格必须与其 `CondSRPatchifyProj` 一致：
+
+```bash
+# 多步 2K（精确 2 倍：1280×736 → 2560×1472）
+NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+  --input input_736p.mp4 \
+  --checkpoint checkpoints/echo-sr/av-sr-2k-multistep-step08000.safetensors \
+  --hq-width 2560 --hq-height 1472 \
+  --output-dir outputs/av_sr_2k_long
+```
 
 ## 推理
 
