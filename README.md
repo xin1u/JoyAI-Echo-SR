@@ -223,6 +223,25 @@ embeddings, so the 1-step path never loads a text encoder). The multi-step
 recipes need neither: they build the prompt cache on their first run and
 validate through the full VAE.
 
+The download command above preserves the repository's subdirectories, so the
+generators land directly in `checkpoints/echo-sr/` and the two auxiliary assets
+one level deeper:
+
+```text
+checkpoints/echo-sr/
+├── av-sr-1k-distill-video-step005100.safetensors
+├── av-sr-1k-multistep-step09900.safetensors
+├── av-sr-2k-multistep-step08000.safetensors
+├── echo-sr-ltx2-19b-dmd-step18300.safetensors
+├── echo-sr-ltx2.3-22b-dmd-step04600.safetensors
+├── prompt/sr_prompt_embeddings.pt
+└── tinydecoder/taeltx2_3_wide.pth
+```
+
+That is exactly the layout the shipped configs expect. Downloading to a
+different `--local-dir` means updating `validation.tiny_decoder_path` and
+`prompt_cache_path` in both distillation configs to match.
+
 Arrange base assets as follows:
 
 ```text

@@ -209,6 +209,23 @@ hf download xin1u/JoyAI-Echo-SR --local-dir checkpoints/echo-sr
 不加载文本编码器）。两个多步配置都不需要它们：prompt cache 会在首次运行时自行生成，
 验证走完整 VAE。
 
+上面的下载命令会保留仓库内的子目录结构，因此生成器直接落在 `checkpoints/echo-sr/`，
+两个辅助资产则各自多一层：
+
+```text
+checkpoints/echo-sr/
+├── av-sr-1k-distill-video-step005100.safetensors
+├── av-sr-1k-multistep-step09900.safetensors
+├── av-sr-2k-multistep-step08000.safetensors
+├── echo-sr-ltx2-19b-dmd-step18300.safetensors
+├── echo-sr-ltx2.3-22b-dmd-step04600.safetensors
+├── prompt/sr_prompt_embeddings.pt
+└── tinydecoder/taeltx2_3_wide.pth
+```
+
+这正是仓库内配置默认期望的布局。如果换成别的 `--local-dir`，就要同步修改两个蒸馏配置里的
+`validation.tiny_decoder_path` 和 `prompt_cache_path`。
+
 基座权重按下面的结构放置：
 
 ```text

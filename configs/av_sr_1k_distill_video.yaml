@@ -114,7 +114,7 @@ validation:
   inference_steps: 1
   frame_rate: 25.0
   condition_noise: 0.3
-  tiny_decoder_path: "checkpoints/tinydecoder/taeltx2_3_wide.pth"
+  tiny_decoder_path: "checkpoints/echo-sr/tinydecoder/taeltx2_3_wide.pth"
   val_clips_dir: "data/val_clips"
 
 checkpoints:
@@ -130,7 +130,7 @@ swanlab:
   mode: "online"
   tags: ["distill", "1k", "video-focused", "tar-data"]
 
-prompt_cache_path: "checkpoints/prompt/sr_prompt_embeddings.pt"
+prompt_cache_path: "checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt"
 
 seed: 42
 output_dir: "outputs/dmd-1k-video/distill-1K-video"

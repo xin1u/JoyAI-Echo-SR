@@ -69,7 +69,7 @@ is the training-time counterpart of the same formulation.
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `AV_SR_PROMPT_CACHE` | precomputed prompt-embedding cache for the 1-step path | `checkpoints/prompt/sr_prompt_embeddings.pt` |
+| `AV_SR_PROMPT_CACHE` | precomputed prompt-embedding cache for the 1-step path | `checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt` |
 | `ECHO_SR_LPIPS_DIR` | local LPIPS/VGG weight directory (avoids network download) | unset — downloads on first use |
 | `SWANLAB_API_KEY` | experiment tracking, only if `swanlab.enabled: true` | unset |
 | `MAX_WINDOWS` | cap sliding windows during inference (debugging) | `0` (all) |

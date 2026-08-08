@@ -91,7 +91,9 @@ and point `data.data_index_files` at the result.
 `validation.val_clips_dir` (distillation only) is a directory of short MP4s used
 for fixed-sample previews. `validation.tiny_decoder_path` must point at the
 TinyDecoder weights (`taeltx2_3_wide.pth`, published alongside the model
-weights), which decode latents to pixels fast enough to run every 50 steps.
+weights and landing at `checkpoints/echo-sr/tinydecoder/taeltx2_3_wide.pth` if
+you follow the README's download command), which decode latents to pixels fast
+enough to run every 50 steps.
 
 ### Prompt embedding cache
 
@@ -101,7 +103,7 @@ writes the cache; every later run loads it and skips the text encoder entirely,
 saving roughly 14 GB of GPU memory:
 
 ```bash
-export AV_SR_PROMPT_CACHE=checkpoints/prompt/sr_prompt_embeddings.pt
+export AV_SR_PROMPT_CACHE=checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt
 ```
 
 The cache stores the prompt text it was built from and is invalidated

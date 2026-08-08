@@ -68,6 +68,11 @@ Download everything:
 hf download xin1u/JoyAI-Echo-SR --local-dir checkpoints/echo-sr
 ```
 
+This preserves the two subdirectories, so the auxiliary assets land at
+`checkpoints/echo-sr/tinydecoder/taeltx2_3_wide.pth` and
+`checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt` — the paths the shipped
+configs default to.
+
 ## Usage
 
 Select assets matching the LTX model family; never mix 19B and 22B assets.

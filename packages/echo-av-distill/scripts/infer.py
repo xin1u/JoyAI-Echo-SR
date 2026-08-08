@@ -375,7 +375,7 @@ def main():
     # Prompt embeddings
     from echo_sr.training.prompts import SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT
     from echo_sr.model.loader import encode_fixed_prompts
-    cache_path = Path(cfg.get("prompt_cache_path", "checkpoints/prompt/sr_prompt_embeddings.pt"))
+    cache_path = Path(cfg.get("prompt_cache_path", "checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt"))
     cond_feats, val_embeds = encode_fixed_prompts(
         model_cfg["model_path"], model_cfg["text_encoder_path"], device,
         SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT, cache_path,
@@ -396,7 +396,7 @@ def main():
             vae_decoder = None
     if vae_decoder is None:
         from echo_sr.validation.tiny_decoder import TAEHV
-        td_path = cfg.get("validation", {}).get("tiny_decoder_path", "checkpoints/tinydecoder/taeltx2_3_wide.pth")
+        td_path = cfg.get("validation", {}).get("tiny_decoder_path", "checkpoints/echo-sr/tinydecoder/taeltx2_3_wide.pth")
         vae_decoder = TAEHV(checkpoint_path=td_path).to(device, torch.bfloat16).eval()
         print(f"TinyDecoder loaded ({td_path})")
 

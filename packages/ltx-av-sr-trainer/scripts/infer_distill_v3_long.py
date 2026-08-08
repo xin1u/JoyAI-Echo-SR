@@ -77,7 +77,7 @@ OUTPUT_DIR = _PKG_ROOT / "outputs" / "distill_v3_long_inference"
 AUDIO_SAMPLE_RATE = 44100
 
 PROMPT_CACHE_PATH = Path(
-    os.environ.get("AV_SR_PROMPT_CACHE", "checkpoints/prompt/sr_prompt_embeddings.pt")
+    os.environ.get("AV_SR_PROMPT_CACHE", "checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt")
 )
 
 

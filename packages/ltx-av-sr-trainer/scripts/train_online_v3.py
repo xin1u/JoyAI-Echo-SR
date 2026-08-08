@@ -91,7 +91,7 @@ SR_FIXED_PROMPT = (
 # ---------------------------------------------------------------------------
 
 PROMPT_CACHE_PATH = Path(
-    os.environ.get("AV_SR_PROMPT_CACHE", "checkpoints/prompt/sr_prompt_embeddings.pt")
+    os.environ.get("AV_SR_PROMPT_CACHE", "checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt")
 )
 
 
@@ -104,7 +104,7 @@ def setup_fixed_embeddings(
 ):
     """Load cached prompt embeddings if available, otherwise encode and save.
 
-    Cache path: $AV_SR_PROMPT_CACHE (default: checkpoints/prompt/sr_prompt_embeddings.pt)
+    Cache path: $AV_SR_PROMPT_CACHE (default: checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt)
     If the cache exists AND the prompt text matches, skip text encoder entirely.
     Otherwise, encode, save cache, then unload text encoder.
 

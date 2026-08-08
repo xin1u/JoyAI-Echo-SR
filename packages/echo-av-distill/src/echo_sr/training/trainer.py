@@ -183,7 +183,7 @@ class EchoTrainer:
 
         # Text embeddings — precompute Block 1+2+3 once (fixed prompt)
         from echo_sr.training.prompts import SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT
-        cache_path = Path(cfg.get("prompt_cache_path", "checkpoints/prompt/sr_prompt_embeddings.pt"))
+        cache_path = Path(cfg.get("prompt_cache_path", "checkpoints/echo-sr/prompt/sr_prompt_embeddings.pt"))
         self.cond_feats, self.val_embeds = encode_fixed_prompts(
             model_cfg["model_path"], model_cfg["text_encoder_path"], self.device,
             SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT, cache_path,
