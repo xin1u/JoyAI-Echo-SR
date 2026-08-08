@@ -199,6 +199,9 @@ for step in range(steps):
 
 ## 与 v3 Distill 的对比
 
+下表对比的 `train_distill_v3.py` 是本包的前身实现，**未包含在本次发布中**，仅用于说明
+现有 `distiller.py` 的设计取舍。
+
 | 对比 | v3 (`train_distill_v3.py`) | echo-sr (`distiller.py`) |
 |------|---------------------------|--------------------------|
 | LoRA 管理 | `DMDBranchManager` (3个 NativeLoRA 实例) | `EchoDMD` (单 adapter + buffer/param) |

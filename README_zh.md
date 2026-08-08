@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/echo-sr-hero.jpg" alt="Echo-SR 将低分辨率视频重建为高分辨率视频" width="100%">
+  <img src="assets/echo-sr-hero.jpg" alt="JoyAI-Echo-SR 将低分辨率音视频片段修复到高分辨率" width="100%">
 </p>
 
 <div align="center">
@@ -34,7 +34,8 @@ JoyAI-Echo-SR 是 [JoyAI-Echo](https://github.com/jd-opensource/JoyAI-Echo) 的�
 的产品线：
 
 - **短视频 DMD** —— LTX-2 19B 与 LTX-2.3 22B 的一步音视频生成器，由冻结三步教师经
-  DMD 分布匹配、GAN 监督与像素损失蒸馏得到。
+  DMD 分布匹配、GAN 监督与像素损失蒸馏得到。DMD 损失锐化视频分支；权重同时带有完整的
+  音频分支（继承自官方蒸馏 LoRA），因此支持一步音视频联合超分。
 - **长视频音视频修复** —— LTX-2.3 22B 上的 736p → 1K / 2K 音视频联合增强，含多步教师与
   一步学生，并支持任意长度片段的滑窗推理。
 
@@ -96,7 +97,7 @@ flowchart LR
     R --> DM["DMD 目标"]
     F --> DM
     S --> PX["GAN + L1 + LPIPS"]
-    TD --> O["Echo-SR 生成器<br/>Checkpoint"]
+    TD --> O["JoyAI-Echo-SR 生成器<br/>Checkpoint"]
     DM --> O
     PX --> O
 ```
@@ -184,7 +185,7 @@ python -m pip install -e packages/ltx-core \
 
 ### 2. 下载权重
 
-Echo-SR 生成器权重发布在
+JoyAI-Echo-SR 生成器权重发布在
 [Hugging Face](https://huggingface.co/xin1u/JoyAI-Echo-SR)：
 
 ```bash
@@ -218,8 +219,13 @@ checkpoints/
 ├── ltx-2-spatial-upscaler-x2-1.0.safetensors
 ├── ltx-2.3-22b-dev.safetensors
 ├── ltx-2.3-22b-distilled-lora-384.safetensors
+├── ltx-2.3-22b-distilled-lora-384-1.1.safetensors
 └── ltx-2.3-spatial-upscaler-x2-1.1.safetensors
 ```
+
+两个 `ltx-2.3-22b-distilled-lora-384*` 是**同一个 LoRA 的两个发布版本**，不是重复文件。
+短视频 DMD 配置用不带后缀的那个做初始化（`init_lora_path`）；音视频配置从 `-1.1` 那个
+读取 LoRA *结构*（`lora_structure_from`）。两个都要保留。
 
 LTX-2.3 官方资产由
 [Lightricks](https://huggingface.co/Lightricks/LTX-2.3) 发布。每次实验都应记录代码

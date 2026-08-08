@@ -8,9 +8,9 @@ This repository includes source derived from the LTX-2 project:
 - Upstream model page: <https://huggingface.co/Lightricks/LTX-2.3>
 - Copyright and license terms: see the root `LICENSE`
 
-Echo-SR vendors **two** compatibility snapshots of that source. They are not a
-version ordering — each carries code the other lacks, and they were taken at
-different points for different product lines:
+JoyAI-Echo-SR vendors **two** compatibility snapshots of that source. They are
+not a version ordering — each carries code the other lacks, and they were taken
+at different points for different product lines:
 
 | Directories | Serves | Notable contents |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ snapshot participates in the `uv` workspace; the 1.1 snapshot is reached through
 The 1.1 snapshot is unmodified apart from an invalid `target-version` value in
 `packages/ltx-trainer-1.1/pyproject.toml` (`[tool.ruff]`), corrected to `py310`.
 
-## Echo-SR Modifications
+## JoyAI-Echo-SR Modifications
 
 ### Short-video DMD line (`packages/ltx-sr-trainer`)
 
@@ -57,9 +57,9 @@ The 1.1 snapshot is unmodified apart from an invalid `target-version` value in
   alongside the optional DMD2 path;
 - FSDP configuration for `BasicAVTransformerBlock` with sharded state dicts.
 
-Modified training and inference entry points carry an Echo-SR release notice in
-their module docstrings. Private infrastructure paths and credentials are not
-part of this distribution.
+Modified training and inference entry points carry a JoyAI-Echo-SR release
+notice in their module docstrings. Private infrastructure paths and credentials
+are not part of this distribution.
 
 ## TinyDecoder (TAEHV)
 

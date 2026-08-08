@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/echo-sr-hero.jpg" alt="Echo-SR transforms low-resolution video into high-resolution video" width="100%">
+  <img src="assets/echo-sr-hero.jpg" alt="JoyAI-Echo-SR restores low-resolution audio-video clips to high resolution" width="100%">
 </p>
 
 <div align="center">
@@ -104,7 +104,7 @@ flowchart LR
     R --> DM["DMD objective"]
     F --> DM
     S --> PX["GAN + L1 + LPIPS"]
-    TD --> O["Echo-SR generator<br/>checkpoint"]
+    TD --> O["JoyAI-Echo-SR generator<br/>checkpoint"]
     DM --> O
     PX --> O
 ```
@@ -194,7 +194,7 @@ python -m pip install -e packages/ltx-core \
 
 ### 2. Download Checkpoints
 
-Echo-SR generator weights are released on
+JoyAI-Echo-SR generator weights are released on
 [Hugging Face](https://huggingface.co/xin1u/JoyAI-Echo-SR):
 
 ```bash
@@ -232,8 +232,14 @@ checkpoints/
 ├── ltx-2-spatial-upscaler-x2-1.0.safetensors
 ├── ltx-2.3-22b-dev.safetensors
 ├── ltx-2.3-22b-distilled-lora-384.safetensors
+├── ltx-2.3-22b-distilled-lora-384-1.1.safetensors
 └── ltx-2.3-spatial-upscaler-x2-1.1.safetensors
 ```
+
+The two `ltx-2.3-22b-distilled-lora-384*` files are **different releases of the
+same LoRA**, not duplicates. The short-video DMD configs initialise from the
+plain one (`init_lora_path`); the audio-video configs read LoRA *structure* from
+the `-1.1` one (`lora_structure_from`). Keep both.
 
 LTX-2.3 base assets are published by
 [Lightricks](https://huggingface.co/Lightricks/LTX-2.3). Record the code commit,

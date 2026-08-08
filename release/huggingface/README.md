@@ -10,7 +10,7 @@ tags:
 ---
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/xin1u/JoyAI-Echo-SR/main/assets/echo-sr-hero.jpg" alt="Echo-SR video super-resolution" width="100%">
+  <img src="https://raw.githubusercontent.com/xin1u/JoyAI-Echo-SR/main/assets/echo-sr-hero.jpg" alt="JoyAI-Echo-SR audio-video super-resolution" width="100%">
 </p>
 
 # JoyAI-Echo-SR
@@ -25,8 +25,8 @@ two product lines. Training and inference code is available in the
   LTX-2.3 22B, distilled with DMD distribution matching + GAN + pixel losses
   on the video branch; the full audio branch is carried in the checkpoints,
   which support joint audio-video 1-step SR.
-- **Long-video audio-video SR** — 736p → 1K joint audio-video enhancement on
-  LTX-2.3 22B: a multi-step teacher and a 1-step student, with sliding-window
+- **Long-video audio-video SR** — 736p → 1K / 2K joint audio-video enhancement
+  on LTX-2.3 22B: multi-step teachers and a 1-step student, with sliding-window
   inference over arbitrarily long clips.
 
 ## Released Weights
@@ -39,7 +39,7 @@ two product lines. Training and inference code is available in the
 | `av-sr-1k-distill-video-step005100.safetensors` | AV SR | LTX-2.3 22B | 5,100 | BF16 LoRA |
 | `av-sr-2k-multistep-step08000.safetensors` | AV SR | LTX-2.3 22B | 8,000 | BF16 LoRA |
 
-The two AV files form a teacher→student pair: the 1-step
+The two 1K AV files form a teacher→student pair: the 1-step
 `av-sr-1k-distill-video` model was distilled from the multi-step
 `av-sr-1k-multistep` teacher (teacher-trajectory distillation with LPIPS, Haar
 wavelet, and temporal losses — `enable_dmd: false`, so it is **not** a DMD

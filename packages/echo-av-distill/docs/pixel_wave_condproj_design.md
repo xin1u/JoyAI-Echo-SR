@@ -703,5 +703,5 @@ Random Noise [1, 128, 16, 24, 40]
 - Space-to-Depth: 最早在 PixelShuffle (Shi et al., 2016) 的逆操作中使用
 - Vision Transformer patchify: ViT (Dosovitskiy et al., 2020) 使用相同的 reshape 策略
 - STFT 可逆性: Griffin & Lim (1984), 任何保留 complex 值的 STFT 天然可逆
-- 当前 LQ Proj 设计: `echo-sr-trainer/docs/LQ_PROJ_REPORT.md`
-- 当前 CondLatent2xProj: `echo-sr-trainer/src/echo_sr/model/cond_latent_2x.py`
+- 当前 LQ Proj 设计: `packages/echo-av-distill/docs/LQ_PROJ_REPORT.md`
+- 当前 CondLatent2xProj: `packages/echo-av-distill/src/echo_sr/model/cond_latent_2x.py`

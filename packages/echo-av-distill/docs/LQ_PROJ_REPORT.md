@@ -318,9 +318,9 @@ training_strategy:
 
 | 功能 | 文件位置 |
 |------|----------|
-| CondSRPatchifyProj 定义 | `ltx-core/.../transformer/cond_sr_patchify.py` |
-| init_cond_sr_proj | `ltx-core/.../transformer/model.py:366` |
-| cond_proj 注入 | `ltx-core/.../transformer/transformer_args.py:157-158` |
-| init_cond_proj (echo) | `echo-sr-trainer/.../model/loader.py:67` |
-| 训练时 LQ 处理 | `echo-sr-trainer/.../training/strategy.py:156-190` |
-| 推理时 LQ 处理 | `echo-sr-trainer/.../validation/validator.py:157-163` |
+| CondSRPatchifyProj 定义 | `ltx-core-1.1/.../transformer/cond_sr_patchify.py` |
+| init_cond_sr_proj | `ltx-core-1.1/.../transformer/model.py:366` |
+| cond_proj 注入 | `ltx-core-1.1/.../transformer/transformer_args.py:157-158` |
+| init_cond_proj (echo) | `echo-av-distill/.../model/loader.py:67` |
+| 训练时 LQ 处理 | `echo-av-distill/.../training/strategy.py:156-190` |
+| 推理时 LQ 处理 | `echo-av-distill/.../validation/validator.py:157-163` |
