@@ -215,11 +215,13 @@ video jointly**. The `-video` in the student's filename refers to the losses of
 its final distillation phase, not to its capability — see
 [The 1-step student is audio-video capable](#the-1-step-student-is-audio-video-capable).
 The 2K checkpoint is an independent multi-step model for exact 2× upscaling
-(1280×736 → 2560×1472) built on `CondSRPatchifyProj`. Two auxiliary assets are published alongside them and are
-required by the audio-video configs — `tinydecoder/taeltx2_3_wide.pth` (fast
-latent preview decoder used during validation) and
-`prompt/sr_prompt_embeddings.pt` (precomputed prompt embeddings, so the 1-step
-path never loads a text encoder).
+(1280×736 → 2560×1472) built on `CondSRPatchifyProj`. Two auxiliary assets are
+published alongside them, both required by the two distillation configs —
+`tinydecoder/taeltx2_3_wide.pth` (fast latent preview decoder used during
+validation) and `prompt/sr_prompt_embeddings.pt` (precomputed prompt
+embeddings, so the 1-step path never loads a text encoder). The multi-step
+recipes need neither: they build the prompt cache on their first run and
+validate through the full VAE.
 
 Arrange base assets as follows:
 
@@ -257,7 +259,11 @@ python tools/build_train_index.py \
   --output data/train_index.json
 ```
 
-The same `data/train_index.json` format is consumed by both public recipes.
+The index is a JSON object with one `resolved_files` list of shard paths — see
+`examples/train_index.example.json`. The same format is consumed by both DMD
+recipes and by `av_sr_1k_distill_video.yaml`; the other three audio-video
+configs read a flat MP4 directory instead (see
+[`docs/av_sr_training.md`](docs/av_sr_training.md)).
 
 ### 4. Validate the Setup
 
@@ -329,12 +335,13 @@ perturbs those conditions with noise sampled in
 `[condition_noise_min, condition_noise_max]` so the model does not overfit to a
 single degradation strength.
 
-Video and audio share one 48-layer transformer. Cross-attention between the two
-modalities is present in every layer, but **gradients are blocked between them
-in layers 0–23** (`cross_attn_grad_isolation_layer: 24`); layers 24–47 let
-gradients flow freely. Early layers therefore learn modality-specific features
+Video and audio share one 48-layer transformer, with cross-attention between the
+two modalities in every layer. The 1K multi-step teacher additionally **blocks
+A↔V gradients in layers 0–23** (`cross_attn_grad_isolation_layer: 24`), letting
+layers 24–47 flow freely. Early layers therefore learn modality-specific features
 without one branch destabilising the other, while late layers learn genuinely
-joint representations.
+joint representations. The 2K recipe and both distillation configs omit the key,
+so gradients flow freely through every layer there.
 
 All adapters are rank-384 / alpha-384 LoRA over ~40 module patterns, including
 the audio-video cross-attention gate adaLN modules.
@@ -384,12 +391,19 @@ excluded from the loss, so the model sees the same i2v-with-a-given-first-frame
 formulation it will meet at inference. It is `0.5` in `av_sr_1k_multistep.yaml`
 and both distillation configs, and `0.0` in `av_sr_2k_multistep.yaml`.
 
+The two launchers also disagree on how they split the input into shots, which
+matters when picking a clip length. The multi-step script rounds **up**
+(`ceil(total_frames / 241)`), so a short clip still produces one shot. The
+1-step script rounds **down** and drops any trailing partial shot, so its input
+should be a whole multiple of 241 frames; it errors out instead of producing
+nothing when given less than one full shot.
+
 The multi-step inference script (`infer_sr_long.py`) does **not** chain windows
 this way — it denoises each window independently and relies on the crossfade
 alone. Drop-first-frame chaining is what makes the 1-step model usable on long
 input despite having no iterative refinement to hide seams.
 
-### Training
+### Long-video training
 
 ```bash
 # 736p → 1K, multi-step teacher
@@ -447,7 +461,7 @@ is a statement about the **final training phase**, not about the model:
 In short: use it as a **1-step audio-video SR model**. Inputs without an audio
 track simply produce silent video.
 
-### Inference
+### Long-video inference
 
 ```bash
 # multi-step, audio + video output
@@ -463,9 +477,11 @@ NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
   --output-dir outputs/av_distill_long
 ```
 
-Pass `--prompt-file` a JSON of per-shot `Summary` strings to steer each shot, or
-`--prompt` for a single fallback used everywhere. The 1-step path reads prompt
-embeddings from `AV_SR_PROMPT_CACHE` instead of loading Gemma.
+Only the multi-step launcher takes prompts: pass `--prompt-file` a JSON of
+per-shot `Summary` strings to steer each shot, or `--prompt` for a single
+fallback used everywhere. The 1-step launcher has no prompt flags at all — it
+reads pre-encoded embeddings from `--prompt-cache` (default
+`AV_SR_PROMPT_CACHE`) and never loads Gemma.
 
 For the 2K checkpoint, the output grid must match its `CondSRPatchifyProj`:
 

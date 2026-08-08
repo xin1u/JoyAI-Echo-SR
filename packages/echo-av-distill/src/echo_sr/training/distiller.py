@@ -168,7 +168,7 @@ class EchoDistiller(EchoTrainer):
                 logger.info("Full VAE decoder loaded for pixel loss (frozen, 1-frame decode)")
             else:
                 from echo_sr.validation.tiny_decoder import TAEHV
-                td_path = cfg.get("validation", {}).get("tiny_decoder_path", "ckpt/tinydecoder/taeltx2_3_wide.pth")
+                td_path = cfg.get("validation", {}).get("tiny_decoder_path", "checkpoints/tinydecoder/taeltx2_3_wide.pth")
                 self._tiny_decoder = TAEHV(checkpoint_path=td_path).to(self.device, torch.bfloat16)
                 if self._train_tiny_decoder:
                     self._tiny_decoder.train().requires_grad_(True)
@@ -261,7 +261,7 @@ class EchoDistiller(EchoTrainer):
 
         # Prompts (uses cache if available — fast)
         from echo_sr.training.prompts import SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT
-        cache_path = Path(cfg.get("prompt_cache_path", "ckpt/prompt/sr_prompt_embeddings.pt"))
+        cache_path = Path(cfg.get("prompt_cache_path", "checkpoints/prompt/sr_prompt_embeddings.pt"))
         self.cond_feats, self.val_embeds = encode_fixed_prompts(
             model_cfg["model_path"], model_cfg["text_encoder_path"], self.device,
             SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT, cache_path,

@@ -1,6 +1,5 @@
 ---
 license: other
-library_name: safetensors
 tags:
   - video-super-resolution
   - audio-video

@@ -8,6 +8,12 @@ DMD distribution matching, optional GAN classification, and pixel losses.
 This public entry trains the video branch (the audio LoRA stays frozen at its
 official distilled-LoRA values, so the saved checkpoints remain audio-video
 capable) and requires ``dmd.enabled: true``.
+
+Usage:
+    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_dmd_22b.sh
+
+Pass ``--validate-config`` to parse a config without loading weights or
+initialising CUDA. Modified for the portable JoyAI-Echo-SR release in 2026.
 """
 
 from __future__ import annotations

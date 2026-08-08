@@ -16,10 +16,11 @@ After encoding the fixed prompts at startup, the Gemma text encoder and
 feature extractor are fully unloaded — saving ~14GB GPU VRAM vs v2.
 
 Usage:
-    bash scripts/train_sub.sh \
-        -c configs/ltx23_av_restoration_lora_joyt2av_v3.yaml \
-        -s scripts/train_online_v3.py \
-        -g 8
+    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_1k.sh
+
+The launcher sets the PYTHONPATH for the 1.1 vendored snapshot and passes
+configs/av_sr_1k_multistep.yaml. Modified for the portable JoyAI-Echo-SR
+release in 2026.
 """
 
 from __future__ import annotations

@@ -12,11 +12,10 @@ Key flow:
   5. Train LoRA + cond_proj, everything else frozen
   6. Save merged checkpoint (LoRA + cond_proj) for single-file inference
 
-Usage:
-    python scripts/train.py configs/ltx23_av_restoration_lora.yaml
-
-    # Multi-GPU
-    accelerate launch scripts/train.py configs/ltx23_av_restoration_lora.yaml
+This module is not launched directly in this release: train_online.py and
+train_online_v3.py import SRTrainer and the patch_* helpers from here, and the
+launchers in scripts/ invoke those instead. Modified for the portable
+JoyAI-Echo-SR release in 2026.
 """
 
 from __future__ import annotations

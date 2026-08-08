@@ -6,11 +6,13 @@ windows.  Overlap regions are linearly blended on rank 0 after all ranks finish.
 
 v3: STG + global noise + full audio enhancement via DIT (matching train.py validation).
 
-Usage (8 GPU):
-  torchrun --nproc_per_node=8 scripts/infer_sr_long.py
+Usage (8 GPU, through the launcher that sets the 1.1 PYTHONPATH):
+  NPROC_PER_NODE=8 bash scripts/infer_av_sr_long.sh \
+      --input input_736p.mp4 \
+      --checkpoint checkpoints/echo-sr/av-sr-1k-multistep-step09900.safetensors
 
-Usage (single GPU):
-  python scripts/infer_sr_long.py
+Pass --hq-width 2560 --hq-height 1472 for the 2K checkpoint. Modified for the
+portable JoyAI-Echo-SR release in 2026.
 """
 
 from __future__ import annotations

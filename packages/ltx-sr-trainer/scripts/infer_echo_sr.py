@@ -7,7 +7,7 @@ This entry decodes the video stream and defaults to the x2 training resolution.
 The released DMD checkpoints carry the full audio branch (inherited from the
 official distilled LoRA), so they remain audio-video capable — for joint
 audio-video output use the long-video launchers (`scripts/infer_av_*.sh`).
-Modified for the portable Echo-SR release in 2026.
+Modified for the portable JoyAI-Echo-SR release in 2026.
 """
 
 from __future__ import annotations

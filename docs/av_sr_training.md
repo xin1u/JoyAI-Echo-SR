@@ -116,13 +116,17 @@ dimension of the noisy latent; an expanded `patchify_proj` /
 `audio_patchify_proj` absorbs the extra channels. Training perturbs the
 conditions with noise drawn from `[condition_noise_min, condition_noise_max]`
 so the model does not lock onto one degradation strength — `0.4` for the 1K
-recipe (heavy degradation, generative restoration) versus `0.1` for 2K (closer
-to a faithful upscale).
+multi-step recipe (heavy degradation, generative restoration), `0.1` for 2K
+(closer to a faithful upscale), and `0.6` for both distillation configs, which
+train the student across a wider degradation range than its teacher saw.
 
 Video and audio share one 48-layer transformer with cross-attention in every
-layer. `cross_attn_grad_isolation_layer: 24` blocks gradients between the two
-modalities in layers 0–23 while leaving 24–47 free, so early layers stay
-modality-specific and only late layers learn joint representations.
+layer. Only the 1K multi-step recipe sets `cross_attn_grad_isolation_layer: 24`,
+which blocks gradients between the two modalities in layers 0–23 while leaving
+24–47 free, so early layers stay modality-specific and only late layers learn
+joint representations. The 2K recipe and both distillation configs leave the key
+unset (schema default `None` = disabled); the distillation trainer in
+`packages/echo-av-distill` does not read it at all.
 
 Adapters are rank-384 / alpha-384 LoRA over ~40 module patterns, matching the
 shape of the official LTX-2.3 distilled LoRA. The video-focused distillation
@@ -200,10 +204,11 @@ teacher's weights rather than from scratch.
 video-focused terms and shrinks the *trainable* module list — it does not strip
 the audio branch from the model or the checkpoint:
 
-- The released run resumed from a joint audio-video distillation checkpoint
-  (`enable_dmd: false`, `audio_loss_weight: 2.0`, `with_audio: true`), where the
-  audio LoRA was trained. The video-focused phase then continued sharpening the
-  video branch on tar-shard data.
+- The released run resumed from a joint audio-video distillation checkpoint —
+  the `av_sr_1k_distill.yaml` branch (`enable_dmd: false`, `with_audio: true`,
+  `audio_loss_weight: 1.0`, `audio_stft_loss_weight: 1.0`) — where the audio
+  LoRA was trained. The video-focused phase then continued sharpening the video
+  branch on tar-shard data.
 - `_save_checkpoint` in `echo_sr/training/distiller.py` merges every
   audio/`av_ca` adapter tensor that is not in the student's `target_modules`
   from the teacher into the saved file, so the output always contains the full

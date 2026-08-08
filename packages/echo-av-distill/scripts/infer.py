@@ -4,12 +4,18 @@
 Supports videos of any length via overlapping 121-frame windows.
 Each window uses the last frame of the previous SR output as first-frame condition.
 
+For multi-GPU long-video inference with drop-first-frame chaining use
+scripts/infer_av_distill_long.sh instead; this entry is the single-process
+variant.
+
 Usage:
-    python scripts/infer.py \
-        --input  ckpt/val_clip/story_002.mp4 \
-        --checkpoint outputs/sft-1K/.../checkpoints/lora_step_000400.safetensors \
-        --output outputs/infer/story_002_sr.mp4 \
+    python packages/echo-av-distill/scripts/infer.py \
+        --input input_736p.mp4 \
+        --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors \
+        --output outputs/infer/clip_sr.mp4 \
         --steps 10
+
+Modified for the portable JoyAI-Echo-SR release in 2026.
 """
 
 from __future__ import annotations
@@ -369,7 +375,7 @@ def main():
     # Prompt embeddings
     from echo_sr.training.prompts import SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT
     from echo_sr.model.loader import encode_fixed_prompts
-    cache_path = Path(cfg.get("prompt_cache_path", "ckpt/prompt/sr_prompt_embeddings.pt"))
+    cache_path = Path(cfg.get("prompt_cache_path", "checkpoints/prompt/sr_prompt_embeddings.pt"))
     cond_feats, val_embeds = encode_fixed_prompts(
         model_cfg["model_path"], model_cfg["text_encoder_path"], device,
         SR_FIXED_PROMPT, DEFAULT_NEGATIVE_PROMPT, cache_path,
@@ -390,7 +396,7 @@ def main():
             vae_decoder = None
     if vae_decoder is None:
         from echo_sr.validation.tiny_decoder import TAEHV
-        td_path = cfg.get("validation", {}).get("tiny_decoder_path", "ckpt/tinydecoder/taeltx2_3_wide.pth")
+        td_path = cfg.get("validation", {}).get("tiny_decoder_path", "checkpoints/tinydecoder/taeltx2_3_wide.pth")
         vae_decoder = TAEHV(checkpoint_path=td_path).to(device, torch.bfloat16).eval()
         print(f"TinyDecoder loaded ({td_path})")
 

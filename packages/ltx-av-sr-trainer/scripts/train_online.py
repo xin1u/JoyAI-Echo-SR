@@ -7,11 +7,15 @@ on-the-fly during each training step. No preprocessing required.
 Uses per-video captions from dataset JSON for text conditioning.
 CFG negative prompt follows official ltx-pipelines DEFAULT_NEGATIVE_PROMPT.
 
+In this release the entry point serves the 736p -> 2K recipe, whose config
+supplies per-video captions from the dataset JSON.
+
 Usage:
-    bash scripts/train_sub.sh \
-        -c configs/ltx23_av_restoration_lora_joyt2av.yaml \
-        -s scripts/train_online.py \
-        -g 8
+    CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/train_av_sr_2k.sh
+
+The launcher sets the PYTHONPATH for the 1.1 vendored snapshot and passes
+configs/av_sr_2k_multistep.yaml. Modified for the portable JoyAI-Echo-SR
+release in 2026.
 """
 
 from __future__ import annotations

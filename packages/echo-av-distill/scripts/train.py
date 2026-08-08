@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Echo-SR supervised fine-tuning entry point."""
+"""Echo-SR supervised fine-tuning entry point.
+
+This is the plain SFT loop (EchoTrainer) without a teacher. No released config
+targets it — the published 1-step weights come from train_distill.py with
+configs/av_sr_1k_distill_video.yaml. Modified for the portable JoyAI-Echo-SR
+release in 2026.
+"""
 
 import sys
 
@@ -8,7 +14,7 @@ import yaml
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python scripts/train.py <config.yaml>")
+        print("Usage: python packages/echo-av-distill/scripts/train.py <config.yaml>")
         sys.exit(1)
 
     config_path = sys.argv[1]

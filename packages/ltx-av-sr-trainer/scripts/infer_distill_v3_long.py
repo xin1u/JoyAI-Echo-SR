@@ -20,11 +20,13 @@ The first window of a shot has no predecessor and runs in plain t2av mode.
 `first_frame_conditioning_p` in the training configs is the training-time
 counterpart of the same formulation.
 
-Usage (single GPU):
-  python scripts/infer_distill_v3_long.py
+Usage (multi-GPU, windows distributed across ranks, through the launcher that
+sets the 1.1 PYTHONPATH):
+  NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
+      --input input_736p.mp4 \
+      --checkpoint checkpoints/echo-sr/av-sr-1k-distill-video-step005100.safetensors
 
-Usage (multi-GPU — windows distributed across ranks):
-  torchrun --nproc_per_node=8 scripts/infer_distill_v3_long.py
+Modified for the portable JoyAI-Echo-SR release in 2026.
 """
 
 from __future__ import annotations
@@ -727,6 +729,18 @@ def main():
     log(rank, f"  Video: {total_frames} frames, fps={src_fps}, duration={total_duration:.1f}s")
 
     num_shots = total_frames // FRAMES_PER_SHOT
+    if num_shots == 0:
+        raise ValueError(
+            f"{INPUT_VIDEO} has {total_frames} frames, fewer than one "
+            f"{FRAMES_PER_SHOT}-frame shot. This entry point splits the input into "
+            f"whole {FRAMES_PER_SHOT}-frame shots (two 121-frame windows each) and "
+            "drops any trailing partial shot, so a shorter clip yields no windows. "
+            "Use an input whose length is a multiple of "
+            f"{FRAMES_PER_SHOT} frames."
+        )
+    if total_frames % FRAMES_PER_SHOT:
+        log(rank, f"  WARNING: dropping trailing {total_frames % FRAMES_PER_SHOT} frames "
+                  f"(not a whole {FRAMES_PER_SHOT}-frame shot)")
     log(rank, f"  Detected {num_shots} shots ({FRAMES_PER_SHOT} frames each)")
 
     # --- 2. Compute windows + global noise ---

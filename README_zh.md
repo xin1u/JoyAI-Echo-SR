@@ -203,10 +203,11 @@ hf download xin1u/JoyAI-Echo-SR --local-dir checkpoints/echo-sr
 1K 多步与一步是一对：一步学生正是由它上面那个多步教师蒸馏而来，**两者都做音视频联合修复**。
 一步权重文件名里的 `-video` 指的是其最后一段蒸馏采用视频侧重损失，而不是它只能出视频
 ——见[一步学生支持音视频推理](#一步学生支持音视频推理)。2K 权重是独立的多步模型，
-基于 `CondSRPatchifyProj` 做精确 2 倍放大（1280×736 → 2560×1472）。同时还发布了两个音视频配置
-必须的辅助资产 —— `tinydecoder/taeltx2_3_wide.pth`（验证阶段用的快速 latent 预览
-解码器）和 `prompt/sr_prompt_embeddings.pt`（预计算 prompt embedding，使一步路径完全
-不加载文本编码器）。
+基于 `CondSRPatchifyProj` 做精确 2 倍放大（1280×736 → 2560×1472）。同时还发布了两个辅助资产，
+它们是两个蒸馏配置必需的 —— `tinydecoder/taeltx2_3_wide.pth`（验证阶段用的快速 latent
+预览解码器）和 `prompt/sr_prompt_embeddings.pt`（预计算 prompt embedding，使一步路径完全
+不加载文本编码器）。两个多步配置都不需要它们：prompt cache 会在首次运行时自行生成，
+验证走完整 VAE。
 
 基座权重按下面的结构放置：
 
@@ -243,7 +244,9 @@ python tools/build_train_index.py \
   --output data/train_index.json
 ```
 
-两份公开配置都直接读取相同格式的 `data/train_index.json`。
+索引是一个只含 `resolved_files` 数组的 JSON，格式见 `examples/train_index.example.json`。
+两个 DMD 配置和 `av_sr_1k_distill_video.yaml` 都读这个格式；另外三个音视频配置读的是
+一个扁平的 MP4 目录，见 [`docs/av_sr_training.md`](docs/av_sr_training.md)。
 
 ### 4. 检查配置
 
@@ -310,9 +313,10 @@ export SWANLAB_API_KEY='...'
 `patchify_proj` / `audio_patchify_proj` 吸收。训练时会给这些条件加上从
 `[condition_noise_min, condition_noise_max]` 采样的噪声，避免模型过拟合到单一退化强度。
 
-视频和音频共享同一个 48 层 Transformer，每层都有跨模态注意力，但**第 0–23 层之间梯度被
-切断**（`cross_attn_grad_isolation_layer: 24`），第 24–47 层梯度自由流动。这样浅层各自
-学模态专属特征、互不干扰，深层才学真正的联合表征。
+视频和音频共享同一个 48 层 Transformer，每层都有跨模态注意力。1K 多步教师额外**切断了
+第 0–23 层之间的 A↔V 梯度**（`cross_attn_grad_isolation_layer: 24`），第 24–47 层梯度自由
+流动。这样浅层各自学模态专属特征、互不干扰，深层才学真正的联合表征。2K 配置和两个蒸馏
+配置都没有这个键，因此那三条 recipe 里所有层的梯度都自由流动。
 
 所有 adapter 都是 rank-384 / alpha-384 的 LoRA，覆盖约 40 类模块，含音视频跨注意力的
 gate adaLN。
@@ -348,10 +352,15 @@ Transformer 在窗口之间没有记忆，朴素滑窗会在每条接缝上出�
 HQ latent 并排除出损失，让模型在训练中就见到"给定首帧、续写后续"这一形式。
 `av_sr_1k_multistep.yaml` 和两个蒸馏配置取 `0.5`，`av_sr_2k_multistep.yaml` 取 `0.0`。
 
+两个启动脚本对"如何把输入切成镜头"的处理也不同，选片长时要注意：多步脚本**向上取整**
+（`ceil(总帧数 / 241)`），短片也至少切出一个镜头；一步脚本**向下取整**并丢弃末尾不足一个
+镜头的部分，所以它的输入帧数应当是 241 的整数倍 —— 不足一个完整镜头时会直接报错，
+而不是什么都不输出。
+
 多步推理脚本（`infer_sr_long.py`）**不做**这种串联 —— 它独立去噪每个窗口，只靠交叉淡化。
 drop 首帧串联正是一步模型在没有迭代精修去遮掩接缝的情况下仍能处理长输入的关键。
 
-### 训练
+### 长视频训练
 
 ```bash
 # 736p → 1K，多步教师
@@ -398,7 +407,7 @@ CONFIG=configs/av_sr_1k_distill_video.yaml bash scripts/train_av_distill_1k.sh
 
 简言之：请把它当作**一步音视频超分模型**使用。输入没有音轨时输出即为无声视频。
 
-### 推理
+### 长视频推理
 
 ```bash
 # 多步，输出音频 + 视频
@@ -414,8 +423,9 @@ NPROC_PER_NODE=8 bash scripts/infer_av_distill_long.sh \
   --output-dir outputs/av_distill_long
 ```
 
-`--prompt-file` 传一个包含逐镜头 `Summary` 字段的 JSON 可以分镜头引导，`--prompt` 则是
-全局兜底。一步路径从 `AV_SR_PROMPT_CACHE` 读 prompt embedding，不加载 Gemma。
+只有多步启动脚本接受 prompt：`--prompt-file` 传一个包含逐镜头 `Summary` 字段的 JSON 可以
+分镜头引导，`--prompt` 则是全局兜底。一步启动脚本没有任何 prompt 参数 —— 它从
+`--prompt-cache`（默认取 `AV_SR_PROMPT_CACHE`）读预编码好的 embedding，完全不加载 Gemma。
 
 跑 2K 权重时，输出网格必须与其 `CondSRPatchifyProj` 一致：
 
